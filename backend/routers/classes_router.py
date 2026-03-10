@@ -11,18 +11,40 @@ import io
 router = APIRouter(prefix="/api/classes", tags=["classes"])
 
 
+def _get_visible_classes(teacher: Teacher, db: Session):
+    """Return classes visible to this teacher based on role."""
+    if teacher.role == "standalone":
+        return db.query(ClassGroup).filter(ClassGroup.owner_id == teacher.id).all()
+    elif teacher.role == "hod":
+        return db.query(ClassGroup).filter(ClassGroup.school_id == teacher.school_id).all()
+    else:  # school teacher
+        return teacher.assigned_classes
+
+
+def _can_access_class(teacher: Teacher, class_group: ClassGroup) -> bool:
+    """Check if teacher can access this class."""
+    if teacher.role == "standalone":
+        return class_group.owner_id == teacher.id
+    elif teacher.role == "hod":
+        return class_group.school_id == teacher.school_id
+    else:
+        return class_group in teacher.assigned_classes
+
+
 @router.get("/", response_model=list[ClassResponse])
 def list_classes(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    classes = db.query(ClassGroup).filter(ClassGroup.teacher_id == teacher.id).all()
+    classes = _get_visible_classes(teacher, db)
     result = []
     for c in classes:
         student_count = db.query(Student).filter(Student.class_id == c.id).count()
+        teacher_names = [t.name for t in c.teachers] if c.teachers else []
         result.append(ClassResponse(
             id=c.id, name=c.name, academic_year=c.academic_year,
-            teacher_id=c.teacher_id, student_count=student_count,
+            school_id=c.school_id, owner_id=c.owner_id,
+            student_count=student_count, teacher_names=teacher_names,
             created_at=c.created_at,
         ))
     return result
@@ -34,9 +56,13 @@ def create_class(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
+    if teacher.role == "teacher":
+        raise HTTPException(status_code=403, detail="School teachers cannot create classes. Ask your HOD.")
+
     class_group = ClassGroup(
         name=data.name, academic_year=data.academic_year,
-        teacher_id=teacher.id,
+        owner_id=teacher.id,
+        school_id=teacher.school_id,  # None for standalone
     )
     db.add(class_group)
     db.commit()
@@ -44,9 +70,27 @@ def create_class(
     return ClassResponse(
         id=class_group.id, name=class_group.name,
         academic_year=class_group.academic_year,
-        teacher_id=class_group.teacher_id, student_count=0,
+        school_id=class_group.school_id, owner_id=class_group.owner_id,
+        student_count=0, teacher_names=[],
         created_at=class_group.created_at,
     )
+
+
+@router.delete("/{class_id}")
+def delete_class(
+    class_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
+        raise HTTPException(status_code=404, detail="Class not found")
+    if teacher.role == "teacher":
+        raise HTTPException(status_code=403, detail="Only HOD or class owner can delete classes")
+    db.query(Student).filter(Student.class_id == class_id).delete()
+    db.delete(class_group)
+    db.commit()
+    return {"message": "Class deleted"}
 
 
 @router.get("/{class_id}/students", response_model=list[StudentResponse])
@@ -55,12 +99,17 @@ def list_students(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    class_group = db.query(ClassGroup).filter(
-        ClassGroup.id == class_id, ClassGroup.teacher_id == teacher.id
-    ).first()
-    if not class_group:
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
-    return db.query(Student).filter(Student.class_id == class_id).all()
+    students = db.query(Student).filter(Student.class_id == class_id).all()
+    return [
+        StudentResponse(
+            id=s.id, name=s.name, student_code=s.student_code,
+            class_id=s.class_id, class_name=class_group.name,
+        )
+        for s in students
+    ]
 
 
 @router.post("/{class_id}/students", response_model=StudentResponse)
@@ -70,10 +119,8 @@ def add_student(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    class_group = db.query(ClassGroup).filter(
-        ClassGroup.id == class_id, ClassGroup.teacher_id == teacher.id
-    ).first()
-    if not class_group:
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
 
     student_code = data.student_code or f"S{uuid.uuid4().hex[:8].upper()}"
@@ -83,7 +130,28 @@ def add_student(
     db.add(student)
     db.commit()
     db.refresh(student)
-    return student
+    return StudentResponse(
+        id=student.id, name=student.name, student_code=student.student_code,
+        class_id=student.class_id, class_name=class_group.name,
+    )
+
+
+@router.delete("/{class_id}/students/{student_id}")
+def remove_student(
+    class_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
+        raise HTTPException(status_code=404, detail="Class not found")
+    student = db.query(Student).filter(Student.id == student_id, Student.class_id == class_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    db.delete(student)
+    db.commit()
+    return {"message": "Student removed"}
 
 
 @router.post("/{class_id}/students/upload")
@@ -93,10 +161,8 @@ def upload_students_csv(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    class_group = db.query(ClassGroup).filter(
-        ClassGroup.id == class_id, ClassGroup.teacher_id == teacher.id
-    ).first()
-    if not class_group:
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
 
     content = file.file.read().decode("utf-8")
@@ -118,18 +184,51 @@ def upload_students_csv(
     return {"message": f"Added {added} students", "count": added}
 
 
-@router.delete("/{class_id}")
-def delete_class(
-    class_id: int,
+@router.get("/search-students", response_model=list[StudentResponse])
+def search_students_in_my_classes(
+    q: str = "",
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    class_group = db.query(ClassGroup).filter(
-        ClassGroup.id == class_id, ClassGroup.teacher_id == teacher.id
-    ).first()
-    if not class_group:
+    """Search students across classes visible to this teacher."""
+    visible_classes = _get_visible_classes(teacher, db)
+    class_ids = [c.id for c in visible_classes]
+    if not class_ids:
+        return []
+
+    query = db.query(Student).filter(Student.class_id.in_(class_ids))
+    if q:
+        query = query.filter(
+            (Student.name.ilike(f"%{q}%")) | (Student.student_code.ilike(f"%{q}%"))
+        )
+    students = query.limit(50).all()
+
+    result = []
+    for s in students:
+        cg = db.query(ClassGroup).filter(ClassGroup.id == s.class_id).first()
+        result.append(StudentResponse(
+            id=s.id, name=s.name, student_code=s.student_code,
+            class_id=s.class_id, class_name=cg.name if cg else "",
+        ))
+    return result
+
+
+@router.post("/{class_id}/add-existing-student")
+def add_existing_student_to_class(
+    class_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Move an existing student from another class to this class."""
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
-    db.query(Student).filter(Student.class_id == class_id).delete()
-    db.delete(class_group)
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    student.class_id = class_id
     db.commit()
-    return {"message": "Class deleted"}
+    return {"message": f"{student.name} moved to {class_group.name}"}

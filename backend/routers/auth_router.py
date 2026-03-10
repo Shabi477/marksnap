@@ -1,28 +1,77 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Teacher
-from schemas import TeacherCreate, TeacherLogin, TeacherResponse, Token
+from models import Teacher, School
+from schemas import TeacherCreate, TeacherLogin, TeacherResponse, Token, SchoolRegister, SchoolResponse
 from auth import hash_password, verify_password, create_access_token, get_current_teacher
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _teacher_response(teacher: Teacher) -> dict:
+    return {
+        "id": teacher.id,
+        "email": teacher.email,
+        "name": teacher.name,
+        "role": teacher.role,
+        "school_id": teacher.school_id,
+        "school_name": teacher.school.name if teacher.school else None,
+        "created_at": teacher.created_at,
+    }
+
+
 @router.post("/register", response_model=TeacherResponse)
 def register(data: TeacherCreate, db: Session = Depends(get_db)):
+    """Register as standalone teacher or join a school with invite code."""
     existing = db.query(Teacher).filter(Teacher.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    school_id = None
+    role = "standalone"
+
+    if data.invite_code:
+        school = db.query(School).filter(School.invite_code == data.invite_code.strip().upper()).first()
+        if not school:
+            raise HTTPException(status_code=400, detail="Invalid invite code")
+        school_id = school.id
+        role = "teacher"
 
     teacher = Teacher(
         email=data.email,
         name=data.name,
         password_hash=hash_password(data.password),
+        role=role,
+        school_id=school_id,
     )
     db.add(teacher)
     db.commit()
     db.refresh(teacher)
-    return teacher
+    return _teacher_response(teacher)
+
+
+@router.post("/register-school", response_model=SchoolResponse)
+def register_school(data: SchoolRegister, db: Session = Depends(get_db)):
+    """Register a new school and create the HOD account."""
+    existing = db.query(Teacher).filter(Teacher.email == data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    school = School(name=data.school_name)
+    db.add(school)
+    db.flush()
+
+    teacher = Teacher(
+        email=data.email,
+        name=data.name,
+        password_hash=hash_password(data.password),
+        role="hod",
+        school_id=school.id,
+    )
+    db.add(teacher)
+    db.commit()
+    db.refresh(school)
+    return school
 
 
 @router.post("/login", response_model=Token)
@@ -42,4 +91,4 @@ def get_me(
     db: Session = Depends(get_db),
     current_teacher: Teacher = Depends(get_current_teacher),
 ):
-    return current_teacher
+    return _teacher_response(current_teacher)

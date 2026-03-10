@@ -10,6 +10,7 @@ import Tests from './pages/Tests';
 import TestDetail from './pages/TestDetail';
 import ScanUpload from './pages/ScanUpload';
 import Results from './pages/Results';
+import SchoolManagement from './pages/SchoolManagement';
 
 function ProtectedRoute({ children }) {
   const { teacher, loading } = useAuth();
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route path="scan/:testId" element={<ScanUpload />} />
         <Route path="results/:testId" element={<Results />} />
+        <Route path="school" element={<SchoolManagement />} />
       </Route>
     </Routes>
   );

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import init_db
-from routers import auth_router, classes_router, tests_router, scan_router, results_router
+from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router
 import os
 
 app = FastAPI(title="MarkSnap", version="1.0.0", description="Scan & grade multiple choice tests instantly")
@@ -27,6 +27,7 @@ app.include_router(classes_router.router)
 app.include_router(tests_router.router)
 app.include_router(scan_router.router)
 app.include_router(results_router.router)
+app.include_router(school_router.router)
 
 # Serve uploads directory
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")

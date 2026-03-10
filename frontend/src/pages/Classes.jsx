@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { classesAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Users, Plus, Trash2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Classes() {
+  const { teacher } = useAuth();
   const [classes, setClasses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -58,10 +60,12 @@ export default function Classes() {
           <h1 className="page-title">Classes</h1>
           <p className="page-subtitle">Manage your classes and students</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          New Class
-        </button>
+        {(teacher?.role === 'standalone' || teacher?.role === 'hod') && (
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            New Class
+          </button>
+        )}
       </div>
 
       {/* Create form */}
@@ -125,12 +129,14 @@ export default function Classes() {
                     <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-brand-500 transition-colors" />
                   </div>
                 </Link>
-                <button
-                  onClick={() => handleDelete(cls.id, cls.name)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {(teacher?.role === 'standalone' || teacher?.role === 'hod') && (
+                  <button
+                    onClick={() => handleDelete(cls.id, cls.name)}
+                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -3,8 +3,28 @@ from typing import Optional
 from datetime import datetime
 
 
+# --- School ---
+class SchoolCreate(BaseModel):
+    name: str
+
+class SchoolResponse(BaseModel):
+    id: int
+    name: str
+    invite_code: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
 # --- Auth ---
 class TeacherCreate(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+    invite_code: Optional[str] = None  # None = standalone, provided = join school
+
+class SchoolRegister(BaseModel):
+    school_name: str
     email: EmailStr
     name: str
     password: str
@@ -17,6 +37,9 @@ class TeacherResponse(BaseModel):
     id: int
     email: str
     name: str
+    role: str
+    school_id: Optional[int] = None
+    school_name: Optional[str] = None
     created_at: datetime
     class Config:
         from_attributes = True
@@ -35,11 +58,17 @@ class ClassResponse(BaseModel):
     id: int
     name: str
     academic_year: str
-    teacher_id: int
+    school_id: Optional[int] = None
+    owner_id: Optional[int] = None
     student_count: int = 0
+    teacher_names: list[str] = []
     created_at: datetime
     class Config:
         from_attributes = True
+
+class AssignTeacher(BaseModel):
+    teacher_id: int
+    class_id: int
 
 
 # --- Students ---
@@ -52,8 +81,13 @@ class StudentResponse(BaseModel):
     name: str
     student_code: str
     class_id: int
+    class_name: Optional[str] = None
     class Config:
         from_attributes = True
+
+class StudentTransfer(BaseModel):
+    student_id: int
+    to_class_id: int
 
 
 # --- Tests ---

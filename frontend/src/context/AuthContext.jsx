@@ -26,8 +26,13 @@ export function AuthProvider({ children }) {
     setTeacher(me.data);
   };
 
-  const register = async (name, email, password) => {
-    await authAPI.register({ name, email, password });
+  const register = async (name, email, password, inviteCode) => {
+    await authAPI.register({ name, email, password, invite_code: inviteCode || undefined });
+    await login(email, password);
+  };
+
+  const registerSchool = async (schoolName, name, email, password) => {
+    await authAPI.registerSchool({ school_name: schoolName, name, email, password });
     await login(email, password);
   };
 
@@ -37,7 +42,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ teacher, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ teacher, loading, login, register, registerSchool, logout }}>
       {children}
     </AuthContext.Provider>
   );

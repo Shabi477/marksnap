@@ -1,16 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Zap, Eye, EyeOff } from 'lucide-react';
+import { Zap, Eye, EyeOff, School, User, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const MODES = {
+  LOGIN: 'login',
+  REGISTER: 'register',
+  REGISTER_SCHOOL: 'register_school',
+};
+
 export default function Login() {
-  const { login, register, teacher } = useAuth();
+  const { login, register, registerSchool, teacher } = useAuth();
   const navigate = useNavigate();
-  const [isRegister, setIsRegister] = useState(false);
+  const [mode, setMode] = useState(MODES.LOGIN);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [schoolName, setSchoolName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -19,21 +27,30 @@ export default function Login() {
     return null;
   }
 
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setInviteCode('');
+    setSchoolName('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password: '***' });
     setLoading(true);
     try {
-      if (isRegister) {
-        await register(name, email, password);
-        toast.success('Account created! Welcome to MarkSnap.');
-      } else {
+      if (mode === MODES.LOGIN) {
         await login(email, password);
         toast.success('Welcome back!');
+      } else if (mode === MODES.REGISTER_SCHOOL) {
+        await registerSchool(schoolName, name, email, password);
+        toast.success('School registered! Welcome to MarkSnap.');
+      } else {
+        await register(name, email, password, inviteCode);
+        toast.success('Account created! Welcome to MarkSnap.');
       }
       navigate('/');
     } catch (err) {
-      console.error('Login error:', err);
       toast.error(err.response?.data?.detail || 'Something went wrong');
     } finally {
       setLoading(false);
@@ -54,16 +71,32 @@ export default function Login() {
 
         {/* Form card */}
         <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            {isRegister ? 'Create your account' : 'Sign in to continue'}
-          </h2>
+          {mode === MODES.LOGIN ? (
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign in to continue</h2>
+          ) : mode === MODES.REGISTER_SCHOOL ? (
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Register your school</h2>
+          ) : (
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Create your account</h2>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegister && (
+            {mode === MODES.REGISTER_SCHOOL && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">School Name</label>
+                <input
+                  type="text"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  className="input-field"
+                  placeholder="Springfield Academy"
+                  required
+                />
+              </div>
+            )}
+
+            {mode !== MODES.LOGIN && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input
                   type="text"
                   value={name}
@@ -76,9 +109,7 @@ export default function Login() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
                 value={email}
@@ -90,9 +121,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -113,6 +142,24 @@ export default function Login() {
               </div>
             </div>
 
+            {mode === MODES.REGISTER && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  School Invite Code <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g. MARK-7X4K"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Leave blank to register as a standalone teacher
+                </p>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -120,23 +167,45 @@ export default function Login() {
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : mode === MODES.LOGIN ? (
+                'Sign In'
+              ) : mode === MODES.REGISTER_SCHOOL ? (
+                'Register School'
               ) : (
-                <>
-                  {isRegister ? 'Create Account' : 'Sign In'}
-                </>
+                'Create Account'
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsRegister(!isRegister)}
-              className="text-sm text-brand-600 hover:text-brand-700 font-medium"
-            >
-              {isRegister
-                ? 'Already have an account? Sign in'
-                : "Don't have an account? Register"}
-            </button>
+          {/* Mode switcher */}
+          <div className="mt-6 space-y-2">
+            {mode === MODES.LOGIN ? (
+              <>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => { setMode(MODES.REGISTER); resetForm(); }}
+                    className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    Register as a teacher
+                  </button>
+                  <button
+                    onClick={() => { setMode(MODES.REGISTER_SCHOOL); resetForm(); }}
+                    className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    Register your school
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => { setMode(MODES.LOGIN); resetForm(); }}
+                className="text-sm text-brand-600 hover:text-brand-700 font-medium block mx-auto"
+              >
+                Already have an account? Sign in
+              </button>
+            )}
           </div>
         </div>
       </div>

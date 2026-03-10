@@ -32,8 +32,30 @@ api.interceptors.response.use(
 // --- Auth ---
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
+  registerSchool: (data) => api.post('/auth/register-school', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+};
+
+// --- School (HOD) ---
+export const schoolAPI = {
+  getInfo: () => api.get('/school/'),
+  getInviteCode: () => api.get('/school/invite-code'),
+  regenerateInvite: () => api.post('/school/regenerate-invite'),
+  getTeachers: () => api.get('/school/teachers'),
+  getClasses: () => api.get('/school/classes'),
+  createClass: (data) => api.post('/school/classes', data),
+  deleteClass: (id) => api.delete(`/school/classes/${id}`),
+  assignTeacher: (data) => api.post('/school/assign-teacher', data),
+  unassignTeacher: (teacherId, classId) =>
+    api.delete('/school/unassign-teacher', { data: { teacher_id: teacherId, class_id: classId } }),
+  importClasses: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/school/import-classes', formData);
+  },
+  searchStudents: (q) => api.get(`/school/students/search?q=${encodeURIComponent(q)}`),
+  transferStudent: (data) => api.post('/school/students/transfer', data),
 };
 
 // --- Classes ---

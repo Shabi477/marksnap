@@ -10,19 +10,23 @@ import {
   Menu,
   X,
   Zap,
+  Building2,
 } from 'lucide-react';
 import { useState } from 'react';
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/classes', icon: Users, label: 'Classes' },
-  { to: '/tests', icon: FileText, label: 'Tests' },
-];
 
 export default function Layout() {
   const { teacher, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/classes', icon: Users, label: 'Classes' },
+    { to: '/tests', icon: FileText, label: 'Tests' },
+    ...(teacher?.role === 'hod'
+      ? [{ to: '/school', icon: Building2, label: 'School' }]
+      : []),
+  ];
 
   const handleLogout = () => {
     logout();
@@ -89,7 +93,9 @@ export default function Layout() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{teacher?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{teacher?.email}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {teacher?.school_name || (teacher?.role === 'standalone' ? 'Standalone' : teacher?.email)}
+                </p>
               </div>
               <button
                 onClick={handleLogout}

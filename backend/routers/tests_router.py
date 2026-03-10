@@ -5,10 +5,20 @@ from database import get_db
 from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry
 from auth import get_current_teacher
+from routers.classes_router import _can_access_class
 from services.sheet_generator import generate_answer_sheets
 import io
 
 router = APIRouter(prefix="/api/tests", tags=["tests"])
+
+
+def _can_access_test(teacher: Teacher, test: Test) -> bool:
+    if test.teacher_id == teacher.id:
+        return True
+    if teacher.role == "hod" and teacher.school_id:
+        test_owner = test.teacher
+        return test_owner and test_owner.school_id == teacher.school_id
+    return False
 
 
 @router.get("/", response_model=list[TestResponse])
@@ -16,7 +26,11 @@ def list_tests(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    tests = db.query(Test).filter(Test.teacher_id == teacher.id).all()
+    if teacher.role == "hod" and teacher.school_id:
+        school_teacher_ids = [t.id for t in db.query(Teacher).filter(Teacher.school_id == teacher.school_id).all()]
+        tests = db.query(Test).filter(Test.teacher_id.in_(school_teacher_ids)).all()
+    else:
+        tests = db.query(Test).filter(Test.teacher_id == teacher.id).all()
     result = []
     for t in tests:
         sections = [
@@ -83,8 +97,8 @@ def get_test(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    test = db.query(Test).filter(Test.id == test_id, Test.teacher_id == teacher.id).first()
-    if not test:
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test):
         raise HTTPException(status_code=404, detail="Test not found")
     sections = [
         SectionConfig(
@@ -108,8 +122,8 @@ def set_answer_key(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    test = db.query(Test).filter(Test.id == test_id, Test.teacher_id == teacher.id).first()
-    if not test:
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test):
         raise HTTPException(status_code=404, detail="Test not found")
 
     # Clear existing answer keys for this test
@@ -134,8 +148,8 @@ def get_answer_key(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    test = db.query(Test).filter(Test.id == test_id, Test.teacher_id == teacher.id).first()
-    if not test:
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test):
         raise HTTPException(status_code=404, detail="Test not found")
 
     keys = db.query(AnswerKey).filter(AnswerKey.test_id == test_id).order_by(AnswerKey.question_number).all()
@@ -156,14 +170,12 @@ def download_answer_sheets(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    test = db.query(Test).filter(Test.id == test_id, Test.teacher_id == teacher.id).first()
-    if not test:
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test):
         raise HTTPException(status_code=404, detail="Test not found")
 
-    class_group = db.query(ClassGroup).filter(
-        ClassGroup.id == class_id, ClassGroup.teacher_id == teacher.id
-    ).first()
-    if not class_group:
+    class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+    if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
 
     students = db.query(Student).filter(Student.class_id == class_id).all()
@@ -187,8 +199,8 @@ def delete_test(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    test = db.query(Test).filter(Test.id == test_id, Test.teacher_id == teacher.id).first()
-    if not test:
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test):
         raise HTTPException(status_code=404, detail="Test not found")
     db.query(AnswerKey).filter(AnswerKey.test_id == test_id).delete()
     db.query(TestSection).filter(TestSection.test_id == test_id).delete()

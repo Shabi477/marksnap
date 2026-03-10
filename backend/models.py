@@ -1,7 +1,35 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, JSON, Float, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, JSON, Float, Text, Table
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+import secrets
+import string
+
+
+def _generate_invite_code():
+    chars = string.ascii_uppercase + string.digits
+    return "MARK-" + "".join(secrets.choice(chars) for _ in range(4))
+
+
+class School(Base):
+    __tablename__ = "schools"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    invite_code = Column(String, unique=True, index=True, nullable=False, default=_generate_invite_code)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    teachers = relationship("Teacher", back_populates="school")
+    classes = relationship("ClassGroup", back_populates="school")
+
+
+# Many-to-many: Teacher <-> ClassGroup
+teacher_classes = Table(
+    "teacher_classes",
+    Base.metadata,
+    Column("teacher_id", Integer, ForeignKey("teachers.id"), primary_key=True),
+    Column("class_id", Integer, ForeignKey("class_groups.id"), primary_key=True),
+)
 
 
 class Teacher(Base):
@@ -11,9 +39,13 @@ class Teacher(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="standalone")  # 'hod', 'teacher', 'standalone'
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    classes = relationship("ClassGroup", back_populates="teacher")
+    school = relationship("School", back_populates="teachers")
+    owned_classes = relationship("ClassGroup", back_populates="owner", foreign_keys="ClassGroup.owner_id")
+    assigned_classes = relationship("ClassGroup", secondary=teacher_classes, back_populates="teachers")
     tests = relationship("Test", back_populates="teacher")
 
 
@@ -23,10 +55,13 @@ class ClassGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     academic_year = Column(String, nullable=False)
-    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("teachers.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    teacher = relationship("Teacher", back_populates="classes")
+    school = relationship("School", back_populates="classes")
+    owner = relationship("Teacher", back_populates="owned_classes", foreign_keys=[owner_id])
+    teachers = relationship("Teacher", secondary=teacher_classes, back_populates="assigned_classes")
     students = relationship("Student", back_populates="class_group")
 
 

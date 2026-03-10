@@ -33,8 +33,14 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="page-title">Welcome back, {teacher?.name?.split(' ')[0]}! 👋</h1>
-        <p className="page-subtitle">Here's what's happening with your tests.</p>
+        <h1 className="page-title">Welcome back, {teacher?.name?.split(' ')[0]}!</h1>
+        <p className="page-subtitle">
+          {teacher?.role === 'hod'
+            ? `Managing ${teacher?.school_name || 'your school'}`
+            : teacher?.school_name
+              ? `${teacher?.school_name}`
+              : "Here's what's happening with your tests."}
+        </p>
       </div>
 
       {/* Stats */}
