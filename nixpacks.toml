@@ -1,0 +1,8 @@
+[tool.nixpacks]
+provider = "python"
+
+[tool.nixpacks.phases.setup]
+nixPkgs = ["zbar", "poppler_utils"]
+
+[tool.nixpacks.phases.install]
+cmds = ["cd backend && pip install -r requirements.txt"]

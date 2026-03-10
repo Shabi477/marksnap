@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+backend/venv/
+backend/marksnap.db
+backend/uploads/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+.DS_Store
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
