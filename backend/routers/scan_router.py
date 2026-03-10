@@ -4,19 +4,11 @@ from database import get_db
 from models import Teacher, Test, ScanBatch, ScanResult, AnswerKey, Student
 from schemas import ScanBatchResponse
 from auth import get_current_teacher
+from routers.tests_router import _can_access_test
 from services.scanner import process_scan_batch
 import os
 import uuid
 import shutil
-
-
-def _can_access_test(teacher: Teacher, test: Test) -> bool:
-    if test.teacher_id == teacher.id:
-        return True
-    if teacher.role == "hod" and teacher.school_id:
-        test_owner = test.teacher
-        return test_owner and test_owner.school_id == teacher.school_id
-    return False
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -33,7 +25,7 @@ async def upload_scans(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     # Check answer key exists
@@ -115,7 +107,7 @@ def list_batches(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
     return db.query(ScanBatch).filter(ScanBatch.test_id == test_id).all()
 

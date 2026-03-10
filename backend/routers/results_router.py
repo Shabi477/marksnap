@@ -5,17 +5,9 @@ from database import get_db
 from models import Teacher, Test, ScanBatch, ScanResult, AnswerKey, Student, ClassGroup
 from schemas import StudentResult
 from auth import get_current_teacher
+from routers.tests_router import _can_access_test
 from services.excel_export import generate_results_excel
 import io
-
-
-def _can_access_test(teacher: Teacher, test: Test) -> bool:
-    if test.teacher_id == teacher.id:
-        return True
-    if teacher.role == "hod" and teacher.school_id:
-        test_owner = test.teacher
-        return test_owner and test_owner.school_id == teacher.school_id
-    return False
 
 router = APIRouter(prefix="/api/results", tags=["results"])
 
@@ -28,7 +20,7 @@ def get_results(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     return _build_student_results(test_id, class_id, db)
@@ -42,7 +34,7 @@ def export_results(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     student_results = _build_student_results(test_id, class_id, db)

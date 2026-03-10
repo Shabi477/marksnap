@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { schoolAPI } from '../services/api';
+import { schoolAPI, testsAPI } from '../services/api';
 import {
   Building2, Users, Copy, RefreshCw, Plus, Trash2, Upload,
-  Search, ArrowRightLeft, UserPlus, UserMinus, BookOpen,
+  Search, ArrowRightLeft, UserPlus, UserMinus, BookOpen, Send,
+  ClipboardList, Filter, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -25,16 +26,35 @@ export default function SchoolManagement() {
   const [transferStudentId, setTransferStudentId] = useState('');
   const [transferClassId, setTransferClassId] = useState('');
 
+  // Tests state
+  const [tests, setTests] = useState([]);
+  const [yearGroups, setYearGroups] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [pushTestId, setPushTestId] = useState('');
+  const [pushClassIds, setPushClassIds] = useState([]);
+  const [pushTeacherIds, setPushTeacherIds] = useState([]);
+  const [pushYearGroups, setPushYearGroups] = useState([]);
+  const [filterTestId, setFilterTestId] = useState('');
+
+  // Year group filter for classes tab
+  const [classYearFilter, setClassYearFilter] = useState('');
+
   const loadData = async () => {
     try {
-      const [schoolRes, teacherRes, classRes] = await Promise.all([
+      const [schoolRes, teacherRes, classRes, testsRes, yearRes, assignRes] = await Promise.all([
         schoolAPI.getInfo(),
         schoolAPI.getTeachers(),
         schoolAPI.getClasses(),
+        testsAPI.list(),
+        schoolAPI.getYearGroups().catch(() => ({ data: [] })),
+        schoolAPI.getTestAssignments().catch(() => ({ data: [] })),
       ]);
       setSchool(schoolRes.data);
       setTeachers(teacherRes.data);
       setClasses(classRes.data);
+      setTests(testsRes.data);
+      setYearGroups(yearRes.data);
+      setAssignments(assignRes.data);
     } catch {
       toast.error('Failed to load school data');
     } finally {
@@ -152,6 +172,49 @@ export default function SchoolManagement() {
     }
   };
 
+  const handlePushTest = async (e) => {
+    e.preventDefault();
+    if (!pushTestId) return;
+    if (!pushClassIds.length && !pushTeacherIds.length && !pushYearGroups.length) {
+      toast.error('Select at least one target (classes, teachers, or year groups)');
+      return;
+    }
+    try {
+      await schoolAPI.pushTest({
+        test_id: parseInt(pushTestId),
+        class_ids: pushClassIds.map(Number),
+        teacher_ids: pushTeacherIds.map(Number),
+        year_groups: pushYearGroups,
+      });
+      toast.success('Test assigned successfully');
+      setPushTestId('');
+      setPushClassIds([]);
+      setPushTeacherIds([]);
+      setPushYearGroups([]);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to push test');
+    }
+  };
+
+  const handleDeleteAssignment = async (id) => {
+    try {
+      await schoolAPI.deleteTestAssignment(id);
+      toast.success('Assignment removed');
+      loadData();
+    } catch {
+      toast.error('Failed to remove assignment');
+    }
+  };
+
+  const toggleMultiSelect = (value, list, setter) => {
+    if (list.includes(value)) {
+      setter(list.filter((v) => v !== value));
+    } else {
+      setter([...list, value]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -164,6 +227,7 @@ export default function SchoolManagement() {
     { key: 'overview', label: 'Overview', icon: Building2 },
     { key: 'classes', label: 'Classes', icon: BookOpen },
     { key: 'teachers', label: 'Teachers', icon: Users },
+    { key: 'tests', label: 'Tests', icon: ClipboardList },
     { key: 'students', label: 'Students', icon: Search },
   ];
 
@@ -299,6 +363,32 @@ export default function SchoolManagement() {
             </button>
           </form>
 
+          {/* Year Group Filter */}
+          {yearGroups.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <button
+                onClick={() => setClassYearFilter('')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  !classYearFilter ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              {yearGroups.map((yg) => (
+                <button
+                  key={yg}
+                  onClick={() => setClassYearFilter(yg)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    classYearFilter === yg ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {yg}
+                </button>
+              ))}
+            </div>
+          )}
+
           {classes.length === 0 ? (
             <div className="card text-center py-12">
               <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -307,7 +397,9 @@ export default function SchoolManagement() {
             </div>
           ) : (
             <div className="space-y-3">
-              {classes.map((cls) => (
+              {classes
+                .filter((cls) => !classYearFilter || cls.academic_year === classYearFilter)
+                .map((cls) => (
                 <div key={cls.id} className="card flex items-center justify-between py-4">
                   <div>
                     <h4 className="font-semibold text-gray-900">{cls.name}</h4>
@@ -407,6 +499,157 @@ export default function SchoolManagement() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tests Tab */}
+      {tab === 'tests' && (
+        <div className="space-y-4">
+          {/* Push Test Form */}
+          <form onSubmit={handlePushTest} className="card space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900">Push Test to Classes / Teachers / Year Groups</h3>
+
+            {/* Select Test */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Test</label>
+              <select
+                value={pushTestId}
+                onChange={(e) => setPushTestId(e.target.value)}
+                className="input-field"
+                required
+              >
+                <option value="">Select a test...</option>
+                {tests.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Select Classes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Classes <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {classes.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleMultiSelect(String(c.id), pushClassIds, setPushClassIds)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                      pushClassIds.includes(String(c.id))
+                        ? 'bg-brand-100 text-brand-700 border-brand-300'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Select Year Groups */}
+            {yearGroups.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Year Groups <span className="text-gray-400 font-normal">(optional — pushes to all classes in year)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {yearGroups.map((yg) => (
+                    <button
+                      key={yg}
+                      type="button"
+                      onClick={() => toggleMultiSelect(yg, pushYearGroups, setPushYearGroups)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                        pushYearGroups.includes(yg)
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {yg}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Select Teachers */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Teachers <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {teachers.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => toggleMultiSelect(String(t.id), pushTeacherIds, setPushTeacherIds)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                      pushTeacherIds.includes(String(t.id))
+                        ? 'bg-amber-100 text-amber-700 border-amber-300'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button type="submit" className="btn-primary flex items-center gap-2">
+              <Send className="w-4 h-4" /> Push Test
+            </button>
+          </form>
+
+          {/* Existing Assignments */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-900">Test Assignments</h3>
+              {tests.length > 0 && (
+                <select
+                  value={filterTestId}
+                  onChange={(e) => setFilterTestId(e.target.value)}
+                  className="input-field w-48 text-sm"
+                >
+                  <option value="">All tests</option>
+                  {tests.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {assignments.length === 0 ? (
+              <div className="text-center py-8">
+                <ClipboardList className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No test assignments yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {assignments
+                  .filter((a) => !filterTestId || a.test_id === parseInt(filterTestId))
+                  .map((a) => (
+                  <div key={a.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{a.test_name}</p>
+                      <p className="text-xs text-gray-500">
+                        {a.class_name && <span className="inline-flex items-center gap-1 mr-2"><BookOpen className="w-3 h-3" /> {a.class_name}</span>}
+                        {a.teacher_name && <span className="inline-flex items-center gap-1 mr-2"><Users className="w-3 h-3" /> {a.teacher_name}</span>}
+                        {a.year_group && <span className="inline-flex items-center gap-1 mr-2"><Filter className="w-3 h-3" /> Year {a.year_group}</span>}
+                        &bull; by {a.assigned_by_name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAssignment(a.id)}
+                      className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -56,6 +56,13 @@ export const schoolAPI = {
   },
   searchStudents: (q) => api.get(`/school/students/search?q=${encodeURIComponent(q)}`),
   transferStudent: (data) => api.post('/school/students/transfer', data),
+  getYearGroups: () => api.get('/school/year-groups'),
+  pushTest: (data) => api.post('/school/push-test', data),
+  getTestAssignments: (testId = null) => {
+    const params = testId ? `?test_id=${testId}` : '';
+    return api.get(`/school/test-assignments${params}`);
+  },
+  deleteTestAssignment: (id) => api.delete(`/school/test-assignments/${id}`),
 };
 
 // --- Classes ---

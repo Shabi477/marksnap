@@ -90,6 +90,7 @@ class Test(Base):
     sections = relationship("TestSection", back_populates="test", order_by="TestSection.order_index")
     answer_keys = relationship("AnswerKey", back_populates="test")
     scan_batches = relationship("ScanBatch", back_populates="test")
+    assignments = relationship("TestAssignment", back_populates="test")
 
 
 class TestSection(Base):
@@ -117,6 +118,25 @@ class AnswerKey(Base):
     correct_answer = Column(String, nullable=False)  # 'A', 'B', 'C', 'D', 'E'
 
     test = relationship("Test", back_populates="answer_keys")
+
+
+class TestAssignment(Base):
+    __tablename__ = "test_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False)
+    assigned_by = Column(Integer, ForeignKey("teachers.id"), nullable=False)
+    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=True)
+    year_group = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    test = relationship("Test", back_populates="assignments")
+    school = relationship("School")
+    assigner = relationship("Teacher", foreign_keys=[assigned_by])
+    class_group = relationship("ClassGroup")
+    target_teacher = relationship("Teacher", foreign_keys=[teacher_id])
 
 
 class ScanBatch(Base):

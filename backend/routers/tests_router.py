@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup
+from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
@@ -12,12 +12,37 @@ import io
 router = APIRouter(prefix="/api/tests", tags=["tests"])
 
 
-def _can_access_test(teacher: Teacher, test: Test) -> bool:
+def _can_access_test(teacher: Teacher, test: Test, db: Session = None) -> bool:
     if test.teacher_id == teacher.id:
         return True
     if teacher.role == "hod" and teacher.school_id:
         test_owner = test.teacher
         return test_owner and test_owner.school_id == teacher.school_id
+    # Check if test is assigned to this teacher
+    if db and teacher.school_id:
+        assigned = db.query(TestAssignment).filter(
+            TestAssignment.test_id == test.id,
+            TestAssignment.school_id == teacher.school_id,
+        ).all()
+        for a in assigned:
+            if a.teacher_id == teacher.id:
+                return True
+            if a.class_id:
+                from models import teacher_classes
+                link = db.execute(
+                    teacher_classes.select().where(
+                        teacher_classes.c.teacher_id == teacher.id,
+                        teacher_classes.c.class_id == a.class_id,
+                    )
+                ).first()
+                if link:
+                    return True
+            if a.year_group:
+                teacher_class_years = [
+                    c.academic_year for c in teacher.assigned_classes
+                ]
+                if a.year_group in teacher_class_years:
+                    return True
     return False
 
 
@@ -30,7 +55,45 @@ def list_tests(
         school_teacher_ids = [t.id for t in db.query(Teacher).filter(Teacher.school_id == teacher.school_id).all()]
         tests = db.query(Test).filter(Test.teacher_id.in_(school_teacher_ids)).all()
     else:
-        tests = db.query(Test).filter(Test.teacher_id == teacher.id).all()
+        # Own tests
+        own_tests = db.query(Test).filter(Test.teacher_id == teacher.id).all()
+        test_ids = {t.id for t in own_tests}
+
+        # Tests assigned to this teacher
+        if teacher.school_id:
+            assigned_test_ids = set()
+            # Directly assigned
+            direct = db.query(TestAssignment.test_id).filter(
+                TestAssignment.school_id == teacher.school_id,
+                TestAssignment.teacher_id == teacher.id,
+            ).all()
+            assigned_test_ids.update(a[0] for a in direct)
+
+            # Assigned to teacher's classes
+            teacher_class_ids = [c.id for c in teacher.assigned_classes]
+            if teacher_class_ids:
+                class_assigned = db.query(TestAssignment.test_id).filter(
+                    TestAssignment.school_id == teacher.school_id,
+                    TestAssignment.class_id.in_(teacher_class_ids),
+                ).all()
+                assigned_test_ids.update(a[0] for a in class_assigned)
+
+            # Assigned to year groups that match teacher's classes
+            teacher_years = {c.academic_year for c in teacher.assigned_classes}
+            if teacher_years:
+                year_assigned = db.query(TestAssignment.test_id).filter(
+                    TestAssignment.school_id == teacher.school_id,
+                    TestAssignment.year_group.in_(teacher_years),
+                ).all()
+                assigned_test_ids.update(a[0] for a in year_assigned)
+
+            # Fetch any assigned tests not already in own
+            extra_ids = assigned_test_ids - test_ids
+            if extra_ids:
+                extra = db.query(Test).filter(Test.id.in_(extra_ids)).all()
+                own_tests.extend(extra)
+
+        tests = own_tests
     result = []
     for t in tests:
         sections = [
@@ -98,7 +161,7 @@ def get_test(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
     sections = [
         SectionConfig(
@@ -123,7 +186,7 @@ def set_answer_key(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     # Clear existing answer keys for this test
@@ -149,7 +212,7 @@ def get_answer_key(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     keys = db.query(AnswerKey).filter(AnswerKey.test_id == test_id).order_by(AnswerKey.question_number).all()
@@ -171,7 +234,7 @@ def download_answer_sheets(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
 
     class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
@@ -200,7 +263,7 @@ def delete_test(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = db.query(Test).filter(Test.id == test_id).first()
-    if not test or not _can_access_test(teacher, test):
+    if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
     db.query(AnswerKey).filter(AnswerKey.test_id == test_id).delete()
     db.query(TestSection).filter(TestSection.test_id == test_id).delete()

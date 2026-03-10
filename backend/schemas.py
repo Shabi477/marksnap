@@ -134,6 +134,28 @@ class ScanBatchResponse(BaseModel):
         from_attributes = True
 
 
+# --- Test Assignments ---
+class TestAssignmentCreate(BaseModel):
+    test_id: int
+    class_ids: list[int] = []
+    teacher_ids: list[int] = []
+    year_groups: list[str] = []
+
+class TestAssignmentResponse(BaseModel):
+    id: int
+    test_id: int
+    test_name: str
+    class_id: Optional[int] = None
+    class_name: Optional[str] = None
+    teacher_id: Optional[int] = None
+    teacher_name: Optional[str] = None
+    year_group: Optional[str] = None
+    assigned_by_name: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
 # --- Results ---
 class StudentResult(BaseModel):
     student_id: int

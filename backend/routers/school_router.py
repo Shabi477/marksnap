@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Teacher, School, ClassGroup, Student, teacher_classes
+from models import Teacher, School, ClassGroup, Student, teacher_classes, Test, TestAssignment
 from schemas import (
     SchoolResponse, ClassCreate, ClassResponse, TeacherResponse,
     AssignTeacher, StudentResponse, StudentTransfer,
+    TestAssignmentCreate, TestAssignmentResponse,
 )
 from auth import get_current_teacher
 import uuid
@@ -313,6 +314,157 @@ def transfer_student(
     student.class_id = data.to_class_id
     db.commit()
     return {"message": f"{student.name} moved to {to_class.name}"}
+
+
+# --- Year Groups ---
+@router.get("/year-groups")
+def list_year_groups(
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    require_hod(teacher)
+    years = (
+        db.query(ClassGroup.academic_year)
+        .filter(ClassGroup.school_id == teacher.school_id)
+        .distinct()
+        .all()
+    )
+    return sorted([y[0] for y in years])
+
+
+# --- Test Assignments ---
+@router.post("/push-test", response_model=list[TestAssignmentResponse])
+def push_test(
+    data: TestAssignmentCreate,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    require_hod(teacher)
+
+    test = db.query(Test).filter(Test.id == data.test_id).first()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    # Verify test belongs to a teacher in this school
+    test_owner = db.query(Teacher).filter(Teacher.id == test.teacher_id).first()
+    if not test_owner or test_owner.school_id != teacher.school_id:
+        raise HTTPException(status_code=403, detail="Test does not belong to your school")
+
+    if not data.class_ids and not data.teacher_ids and not data.year_groups:
+        raise HTTPException(status_code=400, detail="Must specify at least one target")
+
+    assignments = []
+
+    # Assign to specific classes
+    for class_id in data.class_ids:
+        cls = db.query(ClassGroup).filter(
+            ClassGroup.id == class_id, ClassGroup.school_id == teacher.school_id
+        ).first()
+        if not cls:
+            continue
+        # Skip if already assigned
+        existing = db.query(TestAssignment).filter(
+            TestAssignment.test_id == data.test_id,
+            TestAssignment.class_id == class_id,
+        ).first()
+        if existing:
+            continue
+        a = TestAssignment(
+            test_id=data.test_id, school_id=teacher.school_id,
+            assigned_by=teacher.id, class_id=class_id,
+        )
+        db.add(a)
+        assignments.append(a)
+
+    # Assign to specific teachers
+    for tid in data.teacher_ids:
+        t = db.query(Teacher).filter(
+            Teacher.id == tid, Teacher.school_id == teacher.school_id
+        ).first()
+        if not t:
+            continue
+        existing = db.query(TestAssignment).filter(
+            TestAssignment.test_id == data.test_id,
+            TestAssignment.teacher_id == tid,
+        ).first()
+        if existing:
+            continue
+        a = TestAssignment(
+            test_id=data.test_id, school_id=teacher.school_id,
+            assigned_by=teacher.id, teacher_id=tid,
+        )
+        db.add(a)
+        assignments.append(a)
+
+    # Assign to year groups
+    for yg in data.year_groups:
+        existing = db.query(TestAssignment).filter(
+            TestAssignment.test_id == data.test_id,
+            TestAssignment.year_group == yg,
+        ).first()
+        if existing:
+            continue
+        a = TestAssignment(
+            test_id=data.test_id, school_id=teacher.school_id,
+            assigned_by=teacher.id, year_group=yg,
+        )
+        db.add(a)
+        assignments.append(a)
+
+    db.commit()
+    for a in assignments:
+        db.refresh(a)
+
+    return [_assignment_response(a, db) for a in assignments]
+
+
+def _assignment_response(a: TestAssignment, db: Session) -> TestAssignmentResponse:
+    test = db.query(Test).filter(Test.id == a.test_id).first()
+    assigner = db.query(Teacher).filter(Teacher.id == a.assigned_by).first()
+    cls = db.query(ClassGroup).filter(ClassGroup.id == a.class_id).first() if a.class_id else None
+    tgt = db.query(Teacher).filter(Teacher.id == a.teacher_id).first() if a.teacher_id else None
+    return TestAssignmentResponse(
+        id=a.id, test_id=a.test_id,
+        test_name=test.name if test else "",
+        class_id=a.class_id,
+        class_name=cls.name if cls else None,
+        teacher_id=a.teacher_id,
+        teacher_name=tgt.name if tgt else None,
+        year_group=a.year_group,
+        assigned_by_name=assigner.name if assigner else "",
+        created_at=a.created_at,
+    )
+
+
+@router.get("/test-assignments", response_model=list[TestAssignmentResponse])
+def list_test_assignments(
+    test_id: int = None,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    require_hod(teacher)
+    query = db.query(TestAssignment).filter(TestAssignment.school_id == teacher.school_id)
+    if test_id:
+        query = query.filter(TestAssignment.test_id == test_id)
+    assignments = query.order_by(TestAssignment.created_at.desc()).all()
+    return [_assignment_response(a, db) for a in assignments]
+
+
+@router.delete("/test-assignments/{assignment_id}")
+def delete_test_assignment(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    require_hod(teacher)
+    a = db.query(TestAssignment).filter(
+        TestAssignment.id == assignment_id,
+        TestAssignment.school_id == teacher.school_id,
+    ).first()
+    if not a:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    db.delete(a)
+    db.commit()
+    return {"message": "Assignment removed"}
 
 
 from datetime import datetime
