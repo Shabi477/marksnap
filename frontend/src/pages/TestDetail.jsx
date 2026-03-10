@@ -191,23 +191,27 @@ export default function TestDetail() {
         {/* Answer grid grouped by section */}
         {test.sections?.map((section) => {
           const sectionAnswers = answerKey.filter((a) => a.section_name === section.section_name);
-          // Min width per card: question number (40px) + gap (12px) + bubbles (48px each + 8px gap between)
           const cardMinWidth = 52 + section.num_options * 48 + (section.num_options - 1) * 8;
           return (
             <div key={section.section_name} className="mb-8">
-              <h3 className="text-sm font-semibold text-brand-600 mb-3 uppercase tracking-wide">
-                Section {section.section_name}
-              </h3>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-6 bg-brand-500 rounded-full"></div>
+                <h3 className="text-sm font-semibold text-brand-700 uppercase tracking-wide">
+                  Section {section.section_name}
+                </h3>
+              </div>
               <div className="flex flex-wrap gap-3">
-                {sectionAnswers.map((q) => {
-                  const globalIdx = answerKey.indexOf(q);
+                {sectionAnswers.map((q, sectionIdx) => {
+                  const globalIdx = answerKey.findIndex(
+                    (a) => a.question_number === q.question_number && a.section_name === q.section_name
+                  );
                   return (
                     <div
                       key={q.question_number}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-100"
                       style={{ minWidth: cardMinWidth }}
                     >
-                      <span className="text-sm font-bold text-gray-500 w-8 text-right shrink-0">
+                      <span className="text-sm font-bold text-gray-600 w-8 text-right shrink-0">
                         {q.question_number}.
                       </span>
                       <div className="flex gap-2">
@@ -216,10 +220,10 @@ export default function TestDetail() {
                             key={opt}
                             type="button"
                             onClick={() => handleAnswerChange(globalIdx, opt)}
-                            className={`w-10 h-10 rounded-full text-sm font-semibold transition-all duration-150 flex items-center justify-center shrink-0 ${
+                            className={`w-10 h-10 rounded-full text-sm font-bold transition-all duration-150 flex items-center justify-center shrink-0 ${
                               q.correct_answer === opt
-                                ? 'bg-brand-500 text-white shadow-sm scale-110'
-                                : 'bg-white text-gray-400 border border-gray-200 hover:border-brand-300 hover:text-brand-500'
+                                ? 'bg-brand-500 text-white shadow-md ring-2 ring-brand-300 scale-110'
+                                : 'bg-white text-gray-500 border-2 border-gray-300 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50'
                             }`}
                           >
                             {opt}

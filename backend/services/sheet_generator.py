@@ -15,13 +15,13 @@ MARGIN_TOP = 25 * mm
 MARGIN_RIGHT = 20 * mm
 MARGIN_BOTTOM = 20 * mm
 
-BUBBLE_RADIUS = 3.5 * mm
-BUBBLE_SPACING_X = 12 * mm
-BUBBLE_SPACING_Y = 8.5 * mm
-QUESTION_NUM_WIDTH = 12 * mm
+BUBBLE_RADIUS = 4 * mm
+BUBBLE_SPACING_X = 13 * mm
+BUBBLE_SPACING_Y = 9 * mm
+QUESTION_NUM_WIDTH = 14 * mm
 
-BRAND_COLOR = HexColor("#6366f1")  # Indigo
-BRAND_COLOR_LIGHT = HexColor("#e0e7ff")
+BRAND_COLOR = HexColor("#2563eb")  # Blue
+BRAND_COLOR_LIGHT = HexColor("#dbeafe")
 
 ALIGNMENT_MARKER_SIZE = 5 * mm
 
@@ -93,9 +93,9 @@ def _draw_page(c, test, student, class_group, sections, page_num, total_pages):
         y = _draw_section(c, section, y)
 
     # --- Footer ---
-    c.setFont("Helvetica", 7)
-    c.setFillColor(HexColor("#9ca3af"))
-    c.drawCentredString(PAGE_WIDTH / 2, 10 * mm, f"MarkSnap Answer Sheet • Do not fold or crease the bubble area")
+    c.setFont("Helvetica", 8)
+    c.setFillColor(HexColor("#6b7280"))
+    c.drawCentredString(PAGE_WIDTH / 2, 10 * mm, "MarkSnap Answer Sheet  •  Do not fold or crease the bubble area  •  Use dark pen or pencil only")
 
 
 def _draw_alignment_markers(c):
@@ -144,10 +144,15 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
 
     y -= (info_box_height + 5 * mm)
 
-    # Instructions
-    c.setFont("Helvetica", 8)
-    c.setFillColor(HexColor("#6b7280"))
-    c.drawString(MARGIN_LEFT, y, "Instructions: Fill in the bubble completely using a dark pen or pencil. Erase cleanly to change an answer.")
+    # Instructions — clearer and larger for students
+    c.setFont("Helvetica-Bold", 9)
+    c.setFillColor(HexColor("#374151"))
+    c.drawString(MARGIN_LEFT, y, "Instructions:")
+    c.setFont("Helvetica", 9)
+    c.setFillColor(HexColor("#4b5563"))
+    c.drawString(MARGIN_LEFT + 22 * mm, y, "Fill in the bubble completely using a dark pen or pencil.")
+    y -= 5 * mm
+    c.drawString(MARGIN_LEFT + 22 * mm, y, "To change an answer, erase your mark fully and fill the new bubble.")
     y -= 8 * mm
 
     return y
@@ -155,18 +160,18 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
 
 def _draw_section(c, section, y):
     """Draw a section with its questions and bubbles."""
-    # Section header
-    c.setFont("Helvetica-Bold", 11)
+    # Section header with blue background bar
     c.setFillColor(BRAND_COLOR)
-    c.drawString(MARGIN_LEFT, y, f"Section {section.section_name}")
-    c.setStrokeColor(BRAND_COLOR)
-    c.setLineWidth(0.5)
-    c.line(MARGIN_LEFT, y - 2 * mm, PAGE_WIDTH - MARGIN_RIGHT, y - 2 * mm)
-    y -= 8 * mm
+    header_height = 7 * mm
+    c.roundRect(MARGIN_LEFT, y - 1 * mm, PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT, header_height, 2, fill=1, stroke=0)
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(white)
+    c.drawString(MARGIN_LEFT + 4 * mm, y + 1 * mm, f"Section {section.section_name}")
+    y -= 10 * mm
 
-    # Option headers
-    c.setFont("Helvetica-Bold", 8)
-    c.setFillColor(HexColor("#6b7280"))
+    # Option headers — bold and dark for clarity
+    c.setFont("Helvetica-Bold", 9)
+    c.setFillColor(HexColor("#374151"))
     for i in range(section.num_options):
         opt_x = MARGIN_LEFT + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X + BUBBLE_RADIUS
         c.drawCentredString(opt_x, y + 2 * mm, OPTIONS[i])
@@ -200,25 +205,31 @@ def _draw_section(c, section, y):
         x_base = MARGIN_LEFT + col * col_width
         q_y = start_y - row * BUBBLE_SPACING_Y
 
-        # Question number
-        c.setFont("Helvetica-Bold", 9)
-        c.setFillColor(black)
+        # Alternating row background for readability
+        if row % 2 == 0:
+            c.setFillColor(HexColor("#f0f7ff"))
+            row_width = QUESTION_NUM_WIDTH + section.num_options * BUBBLE_SPACING_X + 4 * mm
+            c.rect(x_base, q_y - BUBBLE_RADIUS - 1.5 * mm, row_width, BUBBLE_RADIUS * 2 + 3 * mm, fill=1, stroke=0)
+
+        # Question number — large, bold, dark
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColor(HexColor("#1f2937"))
         c.drawRightString(x_base + QUESTION_NUM_WIDTH - 3 * mm, q_y - BUBBLE_RADIUS / 2, f"{q_num}.")
 
-        # Bubbles
+        # Bubbles — thicker border, darker letter inside
         for i in range(section.num_options):
             bx = x_base + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X + BUBBLE_RADIUS
             by = q_y
 
-            c.setStrokeColor(HexColor("#9ca3af"))
+            c.setStrokeColor(HexColor("#4b5563"))
             c.setFillColor(white)
-            c.setLineWidth(0.8)
+            c.setLineWidth(1.2)
             c.circle(bx, by, BUBBLE_RADIUS, fill=1, stroke=1)
 
-            # Small letter inside bubble
-            c.setFont("Helvetica", 6)
-            c.setFillColor(HexColor("#d1d5db"))
-            c.drawCentredString(bx, by - 1.5 * mm, OPTIONS[i])
+            # Clear letter inside bubble — darker for visibility
+            c.setFont("Helvetica-Bold", 7)
+            c.setFillColor(HexColor("#9ca3af"))
+            c.drawCentredString(bx, by - 2 * mm, OPTIONS[i])
 
     # Calculate actual height used
     rows_used = min(questions_per_column, num_questions)

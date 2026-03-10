@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -8,7 +9,14 @@ from database import init_db
 from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router
 import os
 
-app = FastAPI(title="MarkSnap", version="1.0.0", description="Scan & grade multiple choice tests instantly")
+
+@asynccontextmanager
+async def lifespan(app):
+    init_db()
+    yield
+
+
+app = FastAPI(title="MarkSnap", version="1.0.0", description="Scan & grade multiple choice tests instantly", lifespan=lifespan)
 
 # CORS — allow configured origins + defaults for dev
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
@@ -32,11 +40,6 @@ app.include_router(school_router.router)
 # Serve uploads directory
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
 
 
 @app.get("/api/health")

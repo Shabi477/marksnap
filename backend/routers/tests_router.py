@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment
+from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, teacher_classes
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
@@ -10,6 +10,23 @@ from services.sheet_generator import generate_answer_sheets
 import io
 
 router = APIRouter(prefix="/api/tests", tags=["tests"])
+
+
+def _build_test_response(test: Test) -> TestResponse:
+    """Convert a Test model to TestResponse with sections."""
+    sections = [
+        SectionConfig(
+            section_name=s.section_name,
+            num_questions=s.num_questions,
+            num_options=s.num_options,
+            page_number=s.page_number,
+        )
+        for s in test.sections
+    ]
+    return TestResponse(
+        id=test.id, name=test.name, teacher_id=test.teacher_id,
+        sections=sections, created_at=test.created_at,
+    )
 
 
 def _can_access_test(teacher: Teacher, test: Test, db: Session = None) -> bool:
@@ -28,7 +45,6 @@ def _can_access_test(teacher: Teacher, test: Test, db: Session = None) -> bool:
             if a.teacher_id == teacher.id:
                 return True
             if a.class_id:
-                from models import teacher_classes
                 link = db.execute(
                     teacher_classes.select().where(
                         teacher_classes.c.teacher_id == teacher.id,
@@ -94,22 +110,7 @@ def list_tests(
                 own_tests.extend(extra)
 
         tests = own_tests
-    result = []
-    for t in tests:
-        sections = [
-            SectionConfig(
-                section_name=s.section_name,
-                num_questions=s.num_questions,
-                num_options=s.num_options,
-                page_number=s.page_number,
-            )
-            for s in t.sections
-        ]
-        result.append(TestResponse(
-            id=t.id, name=t.name, teacher_id=t.teacher_id,
-            sections=sections, created_at=t.created_at,
-        ))
-    return result
+    return [_build_test_response(t) for t in tests]
 
 
 @router.post("/", response_model=TestResponse)
@@ -138,20 +139,7 @@ def create_test(
 
     db.commit()
     db.refresh(test)
-
-    sections = [
-        SectionConfig(
-            section_name=s.section_name,
-            num_questions=s.num_questions,
-            num_options=s.num_options,
-            page_number=s.page_number,
-        )
-        for s in test.sections
-    ]
-    return TestResponse(
-        id=test.id, name=test.name, teacher_id=test.teacher_id,
-        sections=sections, created_at=test.created_at,
-    )
+    return _build_test_response(test)
 
 
 @router.get("/{test_id}", response_model=TestResponse)
@@ -163,19 +151,7 @@ def get_test(
     test = db.query(Test).filter(Test.id == test_id).first()
     if not test or not _can_access_test(teacher, test, db):
         raise HTTPException(status_code=404, detail="Test not found")
-    sections = [
-        SectionConfig(
-            section_name=s.section_name,
-            num_questions=s.num_questions,
-            num_options=s.num_options,
-            page_number=s.page_number,
-        )
-        for s in test.sections
-    ]
-    return TestResponse(
-        id=test.id, name=test.name, teacher_id=test.teacher_id,
-        sections=sections, created_at=test.created_at,
-    )
+    return _build_test_response(test)
 
 
 @router.post("/{test_id}/answer-key")

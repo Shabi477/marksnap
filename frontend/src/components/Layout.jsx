@@ -4,11 +4,8 @@ import {
   LayoutDashboard,
   Users,
   FileText,
-  ScanLine,
-  BarChart3,
   LogOut,
   Menu,
-  X,
   Zap,
   Building2,
 } from 'lucide-react';

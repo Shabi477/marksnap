@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { schoolAPI, testsAPI } from '../services/api';
 import {
   Building2, Users, Copy, RefreshCw, Plus, Trash2, Upload,
-  Search, ArrowRightLeft, UserPlus, UserMinus, BookOpen, Send,
+  Search, ArrowRightLeft, UserPlus, BookOpen, Send,
   ClipboardList, Filter, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';

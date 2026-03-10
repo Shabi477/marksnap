@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { resultsAPI, classesAPI, testsAPI } from '../services/api';
-import { ArrowLeft, Download, BarChart3, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, Download, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Results() {

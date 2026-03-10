@@ -8,6 +8,7 @@ from schemas import (
     TestAssignmentCreate, TestAssignmentResponse,
 )
 from auth import get_current_teacher
+from datetime import datetime
 import uuid
 import io
 
@@ -20,12 +21,11 @@ def require_hod(teacher: Teacher):
 
 
 def _class_response(c: ClassGroup, db: Session) -> ClassResponse:
-    student_count = db.query(Student).filter(Student.class_id == c.id).count()
     teacher_names = [t.name for t in c.teachers]
     return ClassResponse(
         id=c.id, name=c.name, academic_year=c.academic_year,
         school_id=c.school_id, owner_id=c.owner_id,
-        student_count=student_count, teacher_names=teacher_names,
+        student_count=len(c.students), teacher_names=teacher_names,
         created_at=c.created_at,
     )
 
@@ -278,14 +278,13 @@ def search_students(
         )
     students = query.limit(50).all()
 
-    result = []
-    for s in students:
-        class_group = db.query(ClassGroup).filter(ClassGroup.id == s.class_id).first()
-        result.append(StudentResponse(
+    return [
+        StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_id=s.class_id, class_name=class_group.name if class_group else "",
-        ))
-    return result
+            class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
+        )
+        for s in students
+    ]
 
 
 @router.post("/students/transfer")
@@ -418,19 +417,15 @@ def push_test(
 
 
 def _assignment_response(a: TestAssignment, db: Session) -> TestAssignmentResponse:
-    test = db.query(Test).filter(Test.id == a.test_id).first()
-    assigner = db.query(Teacher).filter(Teacher.id == a.assigned_by).first()
-    cls = db.query(ClassGroup).filter(ClassGroup.id == a.class_id).first() if a.class_id else None
-    tgt = db.query(Teacher).filter(Teacher.id == a.teacher_id).first() if a.teacher_id else None
     return TestAssignmentResponse(
         id=a.id, test_id=a.test_id,
-        test_name=test.name if test else "",
+        test_name=a.test.name if a.test else "",
         class_id=a.class_id,
-        class_name=cls.name if cls else None,
+        class_name=a.class_group.name if a.class_group else None,
         teacher_id=a.teacher_id,
-        teacher_name=tgt.name if tgt else None,
+        teacher_name=a.target_teacher.name if a.target_teacher else None,
         year_group=a.year_group,
-        assigned_by_name=assigner.name if assigner else "",
+        assigned_by_name=a.assigner.name if a.assigner else "",
         created_at=a.created_at,
     )
 
@@ -465,6 +460,3 @@ def delete_test_assignment(
     db.delete(a)
     db.commit()
     return {"message": "Assignment removed"}
-
-
-from datetime import datetime

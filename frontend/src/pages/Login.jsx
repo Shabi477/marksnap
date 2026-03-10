@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Zap, Eye, EyeOff, School, User, Building2 } from 'lucide-react';
+import { Zap, Eye, EyeOff, User, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const MODES = {

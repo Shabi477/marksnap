@@ -39,12 +39,11 @@ def list_classes(
     classes = _get_visible_classes(teacher, db)
     result = []
     for c in classes:
-        student_count = db.query(Student).filter(Student.class_id == c.id).count()
         teacher_names = [t.name for t in c.teachers] if c.teachers else []
         result.append(ClassResponse(
             id=c.id, name=c.name, academic_year=c.academic_year,
             school_id=c.school_id, owner_id=c.owner_id,
-            student_count=student_count, teacher_names=teacher_names,
+            student_count=len(c.students), teacher_names=teacher_names,
             created_at=c.created_at,
         ))
     return result
@@ -196,21 +195,20 @@ def search_students_in_my_classes(
     if not class_ids:
         return []
 
-    query = db.query(Student).filter(Student.class_id.in_(class_ids))
+    query = db.query(Student).join(ClassGroup, Student.class_id == ClassGroup.id).filter(Student.class_id.in_(class_ids))
     if q:
         query = query.filter(
             (Student.name.ilike(f"%{q}%")) | (Student.student_code.ilike(f"%{q}%"))
         )
     students = query.limit(50).all()
 
-    result = []
-    for s in students:
-        cg = db.query(ClassGroup).filter(ClassGroup.id == s.class_id).first()
-        result.append(StudentResponse(
+    return [
+        StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_id=s.class_id, class_name=cg.name if cg else "",
-        ))
-    return result
+            class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
+        )
+        for s in students
+    ]
 
 
 @router.post("/{class_id}/add-existing-student")

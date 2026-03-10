@@ -65,25 +65,31 @@ def _build_student_results(test_id: int, class_id: int, db: Session) -> list[Stu
     if not results:
         return []
 
+    # Pre-fetch all relevant students and classes in bulk
+    student_ids = {r.student_id for r in results if r.student_id}
+    students = {s.id: s for s in db.query(Student).filter(Student.id.in_(student_ids)).all()} if student_ids else {}
+    class_ids_needed = {s.class_id for s in students.values()}
+    class_map = {c.id: c for c in db.query(ClassGroup).filter(ClassGroup.id.in_(class_ids_needed)).all()} if class_ids_needed else {}
+
     # Group results by student
     student_map: dict[int, dict] = {}
     for r in results:
         if not r.student_id:
             continue
         if r.student_id not in student_map:
-            student = db.query(Student).filter(Student.id == r.student_id).first()
+            student = students.get(r.student_id)
             if not student:
                 continue
-            class_group = db.query(ClassGroup).filter(ClassGroup.id == student.class_id).first()
 
             if class_id and student.class_id != class_id:
                 continue
 
+            cg = class_map.get(student.class_id)
             student_map[r.student_id] = {
                 "student_id": student.id,
                 "student_name": student.name,
                 "student_code": student.student_code,
-                "class_name": class_group.name if class_group else "",
+                "class_name": cg.name if cg else "",
                 "answers": {},
                 "correct": {},
                 "score": 0,
