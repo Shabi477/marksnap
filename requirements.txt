@@ -1,0 +1,2 @@
+# Root requirements file — points Nixpacks to backend dependencies
+-r backend/requirements.txt
