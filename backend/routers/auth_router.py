@@ -33,7 +33,7 @@ def login(data: TeacherLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
-    token = create_access_token(data={"sub": teacher.id})
+    token = create_access_token(data={"sub": str(teacher.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 

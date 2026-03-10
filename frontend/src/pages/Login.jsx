@@ -21,6 +21,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login attempt:', { email, password: '***' });
     setLoading(true);
     try {
       if (isRegister) {
@@ -32,6 +33,7 @@ export default function Login() {
       }
       navigate('/');
     } catch (err) {
+      console.error('Login error:', err);
       toast.error(err.response?.data?.detail || 'Something went wrong');
     } finally {
       setLoading(false);
