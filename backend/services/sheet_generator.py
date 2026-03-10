@@ -29,6 +29,32 @@ ALIGNMENT_MARKER_SIZE = 5 * mm
 OPTIONS = ["A", "B", "C", "D", "E"]
 
 
+def _draw_logo_icon(c, x, y, size):
+    """Draw the MarkSnap logo icon (small teal square with scan lines)."""
+    # Rounded teal square background
+    c.setFillColor(BRAND_COLOR)
+    c.roundRect(x, y, size, size, size * 0.2, fill=1, stroke=0)
+
+    # Scan chevron (white)
+    c.setStrokeColor(white)
+    c.setLineWidth(0.8)
+    c.setLineCap(1)
+    inset = size * 0.25
+    mid = size * 0.5
+    c.line(x + inset, y + mid + size * 0.15, x + mid, y + mid)
+    c.line(x + mid, y + mid, x + inset, y + mid - size * 0.15)
+
+    # Vertical scan line (white)
+    c.line(x + mid + size * 0.05, y + inset * 0.8, x + mid + size * 0.05, y + size - inset * 0.8)
+
+    # Dots (lighter teal)
+    dot_r = size * 0.08
+    dot_x = x + size * 0.72
+    c.setFillColor(HexColor("#67e8f9"))
+    c.circle(dot_x, y + size * 0.65, dot_r, fill=1, stroke=0)
+    c.circle(dot_x, y + size * 0.35, dot_r, fill=1, stroke=0)
+
+
 def generate_answer_sheets(test, students, class_group) -> bytes:
     """Generate a PDF with answer sheets for all students."""
     buffer = io.BytesIO()
@@ -124,9 +150,16 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
     bar_height = 7 * mm
     c.setFillColor(BRAND_COLOR)
     c.rect(MARGIN_LEFT, y - bar_height + 5 * mm, info_width, bar_height, fill=1, stroke=0)
+
+    # Logo icon in the brand bar
+    logo_size = 5 * mm
+    logo_x = MARGIN_LEFT + 2.5 * mm
+    logo_y = y - bar_height + 6 * mm
+    _draw_logo_icon(c, logo_x, logo_y, logo_size)
+
     c.setFillColor(white)
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(MARGIN_LEFT + 3 * mm, y - bar_height + 7 * mm, "MarkSnap")
+    c.drawString(MARGIN_LEFT + 9 * mm, y - bar_height + 7 * mm, "MarkSnap")
     c.setFont("Helvetica", 8)
     c.drawRightString(MARGIN_LEFT + info_width - 3 * mm, y - bar_height + 7.5 * mm,
                       f"Page {page_num} of {total_pages}")
