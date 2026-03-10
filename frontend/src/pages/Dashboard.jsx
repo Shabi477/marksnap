@@ -48,7 +48,7 @@ export default function Dashboard() {
         <StatCard icon={Users} label="Classes" value={classes.length} color="brand" />
         <StatCard icon={Users} label="Students" value={totalStudents} color="emerald" />
         <StatCard icon={FileText} label="Tests" value={tests.length} color="amber" />
-        <StatCard icon={ScanLine} label="Scans" value="—" color="violet" />
+        <StatCard icon={ScanLine} label="Scans" value="—" color="teal" />
       </div>
 
       {/* Quick actions */}
@@ -78,8 +78,8 @@ export default function Dashboard() {
           </Link>
 
           <div className="card flex items-center gap-4 opacity-80">
-            <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-              <ScanLine className="w-6 h-6 text-violet-600" />
+            <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+              <ScanLine className="w-6 h-6 text-teal-600" />
             </div>
             <div className="flex-1">
               <p className="font-semibold text-gray-900">Scan Answers</p>
@@ -125,7 +125,7 @@ function StatCard({ icon: Icon, label, value, color }) {
     brand: 'bg-brand-100 text-brand-600',
     emerald: 'bg-emerald-100 text-emerald-600',
     amber: 'bg-amber-100 text-amber-600',
-    violet: 'bg-violet-100 text-violet-600',
+    teal: 'bg-teal-100 text-teal-600',
   };
 
   return (
