@@ -20,9 +20,9 @@ BUBBLE_SPACING_X = 11.5 * mm
 BUBBLE_SPACING_Y = 8.2 * mm
 QUESTION_NUM_WIDTH = 12 * mm
 
-BRAND_COLOR = HexColor("#0d9488")  # Teal
-BRAND_COLOR_LIGHT = HexColor("#ccfbf1")
-BRAND_COLOR_DARK = HexColor("#115e59")
+BRAND_COLOR = HexColor("#0e7490")  # Dark blue-teal
+BRAND_COLOR_LIGHT = HexColor("#cffafe")
+BRAND_COLOR_DARK = HexColor("#164e63")
 
 ALIGNMENT_MARKER_SIZE = 5 * mm
 
@@ -135,10 +135,10 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
     # Student info row (compact, beside QR)
     info_box_height = 16 * mm
     c.setFillColor(BRAND_COLOR_LIGHT)
-    c.setStrokeColor(HexColor("#99f6e4"))
+    c.setStrokeColor(HexColor("#a5f3fc"))
     c.roundRect(MARGIN_LEFT, y - info_box_height, info_width, info_box_height, 2, fill=1, stroke=1)
 
-    c.setFillColor(HexColor("#134e4a"))
+    c.setFillColor(HexColor("#0c4a6e"))
     c.setFont("Helvetica-Bold", 9)
     row1_y = y - 5.5 * mm
     c.drawString(MARGIN_LEFT + 3 * mm, row1_y, f"Name: {student.name}")
@@ -175,7 +175,7 @@ def _draw_section(c, section, y):
 
     # Show option letters in header bar (right side)
     c.setFont("Helvetica-Bold", 8)
-    c.setFillColor(HexColor("#ccfbf1"))
+    c.setFillColor(HexColor("#cffafe"))
     preview_x = MARGIN_LEFT + content_width - 3 * mm
     opts_text = "  ".join(OPTIONS[:section.num_options])
     c.drawRightString(preview_x, y + 0.5 * mm, opts_text)
@@ -228,7 +228,7 @@ def _draw_section(c, section, y):
 
         # Alternating row shading
         if row % 2 == 0:
-            c.setFillColor(HexColor("#f0fdfa"))
+            c.setFillColor(HexColor("#ecfeff"))
             row_width = QUESTION_NUM_WIDTH + section.num_options * BUBBLE_SPACING_X + 2 * mm
             c.rect(x_base, q_y - BUBBLE_RADIUS - 1 * mm, row_width,
                    BUBBLE_RADIUS * 2 + 2 * mm, fill=1, stroke=0)

@@ -71,8 +71,8 @@ export default function ClassDetail() {
       </div>
 
       {/* CSV info */}
-      <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 text-sm text-teal-800">
-        <strong>CSV Format:</strong> Upload a CSV file with columns <code className="bg-teal-100 px-1 rounded">name</code> and optionally <code className="bg-teal-100 px-1 rounded">student_code</code>. Student codes will be auto-generated if not provided.
+      <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 text-sm text-brand-800">
+        <strong>CSV Format:</strong> Upload a CSV file with columns <code className="bg-brand-100 px-1 rounded">name</code> and optionally <code className="bg-brand-100 px-1 rounded">student_code</code>. Student codes will be auto-generated if not provided.
       </div>
 
       {/* Add student form */}
