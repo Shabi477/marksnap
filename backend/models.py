@@ -147,6 +147,7 @@ class Question(Base):
     image_url = Column(String, nullable=True)
     explanation = Column(Text, nullable=True)
     distractor_rationale = Column(Text, nullable=True)  # JSON: {"B": "reason", "C": "reason", ...}
+    skill_type = Column(String, nullable=True)  # 'fluency', 'reasoning', 'problem_solving'
     year_group = Column(String, nullable=True)  # e.g. "Year 7", "Year 8"
     key_stage = Column(String, nullable=True)  # KS1-KS5
     is_active = Column(Boolean, default=True)

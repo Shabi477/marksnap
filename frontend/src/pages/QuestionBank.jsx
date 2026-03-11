@@ -9,7 +9,7 @@ export default function QuestionBank() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', search: '' });
+  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', area: '', skill_type: '', search: '' });
   const [expandedQ, setExpandedQ] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(null);
   const fileInputRef = useRef(null);
@@ -22,20 +22,29 @@ export default function QuestionBank() {
     if (selectedSubject) {
       topicsAPI.list(selectedSubject, {
         key_stage: filters.key_stage || undefined,
-        strand: filters.strand || undefined,
+        strand: filters.area || filters.strand || undefined,
       }).then(r => setTopics(r.data));
       setSelectedTopic(null);
     } else {
       setTopics([]);
     }
-  }, [selectedSubject, filters.key_stage, filters.strand]);
+  }, [selectedSubject, filters.key_stage, filters.strand, filters.area]);
 
-  // Derive unique strands from loaded topics
-  const strands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
+  // Detect category:sub format and derive strand options
+  const allStrands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
+  const hasCategories = allStrands.some(s => s.includes(':'));
+  const categories = hasCategories
+    ? [...new Set(allStrands.map(s => s.split(':')[0].trim()))].sort()
+    : [];
+  const areas = hasCategories && filters.strand
+    ? [...new Set(allStrands.filter(s => s.startsWith(filters.strand + ':')).map(s => s.split(':').slice(1).join(':').trim()))].sort()
+    : [];
+  // For non-category subjects, show raw strands
+  const strands = hasCategories ? categories : allStrands;
 
   useEffect(() => {
     fetchQuestions();
-  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand]);
+  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand, filters.area, filters.skill_type]);
 
   const fetchQuestions = async () => {
     if (!selectedSubject) { setQuestions([]); return; }
@@ -45,7 +54,10 @@ export default function QuestionBank() {
       if (selectedTopic) params.topic_id = selectedTopic;
       if (filters.difficulty) params.difficulty = filters.difficulty;
       if (filters.key_stage) params.key_stage = filters.key_stage;
-      if (filters.strand) params.strand = filters.strand;
+      // Send the most specific strand: area (full "Category: Sub") or category prefix
+      if (filters.area) params.strand = filters.area;
+      else if (filters.strand) params.strand = filters.strand;
+      if (filters.skill_type) params.skill_type = filters.skill_type;
       if (filters.search) params.search = filters.search;
       const r = await questionsAPI.list(params);
       setQuestions(r.data);
@@ -104,7 +116,7 @@ export default function QuestionBank() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-3">
           {/* Subject */}
           <select
             value={selectedSubject || ''}
@@ -120,7 +132,7 @@ export default function QuestionBank() {
           {/* Key Stage */}
           <select
             value={filters.key_stage}
-            onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '' }))}
+            onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '', area: '' }))}
             className="rounded-lg border-gray-300 text-sm"
           >
             <option value="">All Key Stages</option>
@@ -130,18 +142,33 @@ export default function QuestionBank() {
             <option value="KS4">KS4</option>
           </select>
 
-          {/* Strand */}
+          {/* Strand / Category */}
           <select
             value={filters.strand}
-            onChange={e => setFilters(f => ({ ...f, strand: e.target.value }))}
+            onChange={e => setFilters(f => ({ ...f, strand: e.target.value, area: '' }))}
             className="rounded-lg border-gray-300 text-sm"
             disabled={!selectedSubject}
           >
-            <option value="">All Strands</option>
+            <option value="">{hasCategories ? 'All Categories' : 'All Strands'}</option>
             {strands.map(s => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+
+          {/* Area — only shows when categories detected and a category is selected */}
+          {hasCategories && (
+            <select
+              value={filters.area}
+              onChange={e => setFilters(f => ({ ...f, area: e.target.value }))}
+              className="rounded-lg border-gray-300 text-sm"
+              disabled={!filters.strand}
+            >
+              <option value="">All Areas</option>
+              {areas.map(a => (
+                <option key={a} value={`${filters.strand}: ${a}`}>{a}</option>
+              ))}
+            </select>
+          )}
 
           {/* Topic */}
           <select
@@ -166,6 +193,18 @@ export default function QuestionBank() {
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
+          </select>
+
+          {/* Skill Type */}
+          <select
+            value={filters.skill_type}
+            onChange={e => setFilters(f => ({ ...f, skill_type: e.target.value }))}
+            className="rounded-lg border-gray-300 text-sm"
+          >
+            <option value="">All Skill Types</option>
+            <option value="fluency">Fluency</option>
+            <option value="reasoning">Reasoning</option>
+            <option value="problem_solving">Problem Solving</option>
           </select>
 
           {/* Search */}
@@ -213,6 +252,11 @@ export default function QuestionBank() {
                       {q.strand && (
                         <span className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700">
                           {q.strand}
+                        </span>
+                      )}
+                      {q.skill_type && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-teal-50 text-teal-700">
+                          {q.skill_type === 'problem_solving' ? 'Problem Solving' : q.skill_type.charAt(0).toUpperCase() + q.skill_type.slice(1)}
                         </span>
                       )}
                       {q.topic_name && (

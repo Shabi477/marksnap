@@ -4,266 +4,526 @@
     {
       "name": "Number sense: subitising and counting",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 1
     },
     {
       "name": "Number recognition and formation",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 2
     },
     {
       "name": "1:1 correspondence and cardinality",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 3
     },
     {
       "name": "Number bonds fluency (to 10 and 20)",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 4
     },
     {
       "name": "Place value understanding (tens/ones)",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 5
     },
     {
       "name": "Sequencing and ordering numbers",
       "key_stage": "KS1",
-      "strand": "Numeracy Foundations",
+      "strand": "Numeracy: Foundations",
       "order_index": 6
     },
     {
       "name": "Addition and subtraction: conceptual understanding",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 7
     },
     {
       "name": "Multiplication facts: recall and understanding",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 8
     },
     {
       "name": "Division: conceptual understanding",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 9
     },
     {
       "name": "Mental calculation strategies",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 10
     },
     {
       "name": "Written methods: accuracy and procedure",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 11
     },
     {
       "name": "Place value: hundreds, thousands and beyond",
       "key_stage": "KS2",
-      "strand": "Arithmetic Fluency",
+      "strand": "Numeracy: Arithmetic Fluency",
       "order_index": 12
     },
     {
       "name": "Fractions: conceptual understanding",
       "key_stage": "KS2",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 13
     },
     {
       "name": "Fractions: equivalence and ordering",
       "key_stage": "KS2",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 14
     },
     {
       "name": "Decimals: understanding and place value",
       "key_stage": "KS2",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 15
     },
     {
       "name": "Percentages: basic understanding",
       "key_stage": "KS2",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 16
     },
     {
       "name": "Ratio and proportion: introductory concepts",
       "key_stage": "KS3",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 17
     },
     {
       "name": "FDP conversion fluency",
       "key_stage": "KS3",
-      "strand": "Fractions & Proportional Reasoning",
+      "strand": "Numeracy: Fractions & Proportional Reasoning",
       "order_index": 18
     },
     {
       "name": "Shape recognition and properties",
       "key_stage": "KS2",
-      "strand": "Spatial & Geometric Reasoning",
+      "strand": "Numeracy: Spatial & Geometric Reasoning",
       "order_index": 19
     },
     {
       "name": "Spatial awareness and orientation",
       "key_stage": "KS2",
-      "strand": "Spatial & Geometric Reasoning",
+      "strand": "Numeracy: Spatial & Geometric Reasoning",
       "order_index": 20
     },
     {
       "name": "Measurement: reading scales and units",
       "key_stage": "KS2",
-      "strand": "Spatial & Geometric Reasoning",
+      "strand": "Numeracy: Spatial & Geometric Reasoning",
       "order_index": 21
     },
     {
       "name": "Telling the time and time intervals",
       "key_stage": "KS2",
-      "strand": "Spatial & Geometric Reasoning",
+      "strand": "Numeracy: Spatial & Geometric Reasoning",
       "order_index": 22
     },
     {
       "name": "Angle estimation and classification",
       "key_stage": "KS3",
-      "strand": "Spatial & Geometric Reasoning",
+      "strand": "Numeracy: Spatial & Geometric Reasoning",
       "order_index": 23
     },
     {
       "name": "Reading and interpreting tables and charts",
       "key_stage": "KS2",
-      "strand": "Data Handling & Reasoning",
+      "strand": "Numeracy: Data Handling",
       "order_index": 24
     },
     {
       "name": "Interpreting bar charts, pictograms and line graphs",
       "key_stage": "KS2",
-      "strand": "Data Handling & Reasoning",
+      "strand": "Numeracy: Data Handling",
       "order_index": 25
     },
     {
       "name": "Mean, median, mode: understanding averages",
       "key_stage": "KS3",
-      "strand": "Data Handling & Reasoning",
+      "strand": "Numeracy: Data Handling",
       "order_index": 26
     },
     {
       "name": "Basic probability concepts",
       "key_stage": "KS3",
-      "strand": "Data Handling & Reasoning",
+      "strand": "Numeracy: Data Handling",
       "order_index": 27
     },
     {
       "name": "Mathematical vocabulary comprehension",
       "key_stage": "KS2",
-      "strand": "Mathematical Language & Reasoning",
+      "strand": "Numeracy: Mathematical Language",
       "order_index": 28
     },
     {
       "name": "Word problem decoding and comprehension",
       "key_stage": "KS2",
-      "strand": "Mathematical Language & Reasoning",
+      "strand": "Numeracy: Mathematical Language",
       "order_index": 29
     },
     {
       "name": "Multi-step problem solving",
       "key_stage": "KS3",
-      "strand": "Mathematical Language & Reasoning",
+      "strand": "Numeracy: Mathematical Language",
       "order_index": 30
     },
     {
       "name": "Identifying and explaining patterns",
       "key_stage": "KS2",
-      "strand": "Mathematical Language & Reasoning",
+      "strand": "Numeracy: Mathematical Language",
       "order_index": 31
-    },
-    {
-      "name": "Working memory: number recall tasks",
-      "key_stage": "KS2",
-      "strand": "Cognitive & Processing Skills",
-      "order_index": 32
-    },
-    {
-      "name": "Processing speed: rapid number identification",
-      "key_stage": "KS2",
-      "strand": "Cognitive & Processing Skills",
-      "order_index": 33
-    },
-    {
-      "name": "Visual discrimination: shapes and symbols",
-      "key_stage": "KS1",
-      "strand": "Cognitive & Processing Skills",
-      "order_index": 34
-    },
-    {
-      "name": "Sequencing and logical ordering",
-      "key_stage": "KS2",
-      "strand": "Cognitive & Processing Skills",
-      "order_index": 35
     },
     {
       "name": "Algebraic thinking: missing number problems",
       "key_stage": "KS2",
-      "strand": "Algebraic Readiness",
-      "order_index": 36
+      "strand": "Numeracy: Algebraic Readiness",
+      "order_index": 32
     },
     {
       "name": "Using simple formulae",
       "key_stage": "KS3",
-      "strand": "Algebraic Readiness",
-      "order_index": 37
+      "strand": "Numeracy: Algebraic Readiness",
+      "order_index": 33
     },
     {
       "name": "Understanding equals sign and balance",
       "key_stage": "KS2",
-      "strand": "Algebraic Readiness",
-      "order_index": 38
+      "strand": "Numeracy: Algebraic Readiness",
+      "order_index": 34
     },
     {
       "name": "Coordinates and position",
       "key_stage": "KS3",
-      "strand": "Algebraic Readiness",
-      "order_index": 39
+      "strand": "Numeracy: Algebraic Readiness",
+      "order_index": 35
     },
     {
       "name": "Baseline numeracy assessment (entry level)",
       "key_stage": "KS3",
-      "strand": "Diagnostic Baselines",
-      "order_index": 40
-    },
-    {
-      "name": "KS2 readiness check",
-      "key_stage": "KS2",
-      "strand": "Diagnostic Baselines",
-      "order_index": 41
-    },
-    {
-      "name": "KS3 readiness check",
-      "key_stage": "KS3",
-      "strand": "Diagnostic Baselines",
-      "order_index": 42
-    },
-    {
-      "name": "GCSE Foundation gap analysis",
-      "key_stage": "KS4",
-      "strand": "Diagnostic Baselines",
-      "order_index": 43
+      "strand": "Numeracy: Diagnostic Baselines",
+      "order_index": 36
     },
     {
       "name": "Dyscalculia screening indicators",
       "key_stage": "KS2",
-      "strand": "Diagnostic Baselines",
+      "strand": "Numeracy: Diagnostic Baselines",
+      "order_index": 37
+    },
+
+    {
+      "name": "Phonemic awareness: initial, medial and final sounds",
+      "key_stage": "KS1",
+      "strand": "Literacy: Phonics & Decoding",
+      "order_index": 38
+    },
+    {
+      "name": "Blending and segmenting CVC and CCVC words",
+      "key_stage": "KS1",
+      "strand": "Literacy: Phonics & Decoding",
+      "order_index": 39
+    },
+    {
+      "name": "Digraphs and trigraphs recognition",
+      "key_stage": "KS1",
+      "strand": "Literacy: Phonics & Decoding",
+      "order_index": 40
+    },
+    {
+      "name": "Split digraphs and vowel sounds",
+      "key_stage": "KS1",
+      "strand": "Literacy: Phonics & Decoding",
+      "order_index": 41
+    },
+    {
+      "name": "Decoding multisyllabic words",
+      "key_stage": "KS2",
+      "strand": "Literacy: Phonics & Decoding",
+      "order_index": 42
+    },
+    {
+      "name": "High-frequency and common exception words",
+      "key_stage": "KS1",
+      "strand": "Literacy: Reading Fluency",
+      "order_index": 43
+    },
+    {
+      "name": "Reading accuracy and fluency (age-appropriate text)",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Fluency",
       "order_index": 44
+    },
+    {
+      "name": "Prosody and expression in reading",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Fluency",
+      "order_index": 45
+    },
+    {
+      "name": "Reading stamina and sustained attention",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Fluency",
+      "order_index": 46
+    },
+    {
+      "name": "Literal comprehension: retrieval",
+      "key_stage": "KS1",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 47
+    },
+    {
+      "name": "Sequencing events in a text",
+      "key_stage": "KS1",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 48
+    },
+    {
+      "name": "Inference: reading between the lines",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 49
+    },
+    {
+      "name": "Predicting outcomes from text evidence",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 50
+    },
+    {
+      "name": "Summarising main ideas",
+      "key_stage": "KS2",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 51
+    },
+    {
+      "name": "Understanding author's purpose and viewpoint",
+      "key_stage": "KS3",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 52
+    },
+    {
+      "name": "Comparing and contrasting texts",
+      "key_stage": "KS3",
+      "strand": "Literacy: Reading Comprehension",
+      "order_index": 53
+    },
+    {
+      "name": "Vocabulary in context: word meaning from clues",
+      "key_stage": "KS2",
+      "strand": "Literacy: Vocabulary",
+      "order_index": 54
+    },
+    {
+      "name": "Prefixes, suffixes and root words",
+      "key_stage": "KS2",
+      "strand": "Literacy: Vocabulary",
+      "order_index": 55
+    },
+    {
+      "name": "Synonyms, antonyms and word families",
+      "key_stage": "KS2",
+      "strand": "Literacy: Vocabulary",
+      "order_index": 56
+    },
+    {
+      "name": "Subject-specific vocabulary across the curriculum",
+      "key_stage": "KS3",
+      "strand": "Literacy: Vocabulary",
+      "order_index": 57
+    },
+    {
+      "name": "Punctuation: capitals, full stops, question marks",
+      "key_stage": "KS1",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 58
+    },
+    {
+      "name": "Sentence types and structure",
+      "key_stage": "KS2",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 59
+    },
+    {
+      "name": "Verb tenses: past, present, future",
+      "key_stage": "KS2",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 60
+    },
+    {
+      "name": "Word classes: nouns, verbs, adjectives, adverbs",
+      "key_stage": "KS2",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 61
+    },
+    {
+      "name": "Commas, apostrophes and speech marks",
+      "key_stage": "KS2",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 62
+    },
+    {
+      "name": "Clauses: main, subordinate, relative",
+      "key_stage": "KS3",
+      "strand": "Literacy: Grammar & Punctuation",
+      "order_index": 63
+    },
+    {
+      "name": "Spelling: common patterns and rules",
+      "key_stage": "KS2",
+      "strand": "Literacy: Spelling",
+      "order_index": 64
+    },
+    {
+      "name": "Spelling: homophones and near-homophones",
+      "key_stage": "KS2",
+      "strand": "Literacy: Spelling",
+      "order_index": 65
+    },
+    {
+      "name": "Spelling: statutory word lists (Y3-Y6)",
+      "key_stage": "KS2",
+      "strand": "Literacy: Spelling",
+      "order_index": 66
+    },
+    {
+      "name": "Spelling: common errors and tricky words",
+      "key_stage": "KS3",
+      "strand": "Literacy: Spelling",
+      "order_index": 67
+    },
+    {
+      "name": "Writing: sentence construction and cohesion",
+      "key_stage": "KS2",
+      "strand": "Literacy: Writing",
+      "order_index": 68
+    },
+    {
+      "name": "Writing: organising ideas into paragraphs",
+      "key_stage": "KS2",
+      "strand": "Literacy: Writing",
+      "order_index": 69
+    },
+    {
+      "name": "Writing: planning and structuring extended responses",
+      "key_stage": "KS3",
+      "strand": "Literacy: Writing",
+      "order_index": 70
+    },
+    {
+      "name": "Baseline literacy assessment (entry level)",
+      "key_stage": "KS3",
+      "strand": "Literacy: Diagnostic Baselines",
+      "order_index": 71
+    },
+    {
+      "name": "Dyslexia screening indicators",
+      "key_stage": "KS2",
+      "strand": "Literacy: Diagnostic Baselines",
+      "order_index": 72
+    },
+
+    {
+      "name": "Working memory: recall and sequencing tasks",
+      "key_stage": "KS2",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 73
+    },
+    {
+      "name": "Processing speed: rapid naming and identification",
+      "key_stage": "KS2",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 74
+    },
+    {
+      "name": "Visual discrimination: shapes, symbols and letters",
+      "key_stage": "KS1",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 75
+    },
+    {
+      "name": "Auditory discrimination: sounds and phonemes",
+      "key_stage": "KS1",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 76
+    },
+    {
+      "name": "Sequencing and logical ordering",
+      "key_stage": "KS2",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 77
+    },
+    {
+      "name": "Attention and focus: sustained task completion",
+      "key_stage": "KS2",
+      "strand": "Other: Cognitive & Processing Skills",
+      "order_index": 78
+    },
+    {
+      "name": "Following multi-step instructions",
+      "key_stage": "KS2",
+      "strand": "Other: Executive Function",
+      "order_index": 79
+    },
+    {
+      "name": "Planning and organising tasks",
+      "key_stage": "KS2",
+      "strand": "Other: Executive Function",
+      "order_index": 80
+    },
+    {
+      "name": "Self-monitoring and checking work",
+      "key_stage": "KS3",
+      "strand": "Other: Executive Function",
+      "order_index": 81
+    },
+    {
+      "name": "Fine motor skills: handwriting and presentation",
+      "key_stage": "KS1",
+      "strand": "Other: Physical & Motor Skills",
+      "order_index": 82
+    },
+    {
+      "name": "Visual-motor integration: copying and tracing",
+      "key_stage": "KS1",
+      "strand": "Other: Physical & Motor Skills",
+      "order_index": 83
+    },
+    {
+      "name": "KS2 readiness check (cross-curricular)",
+      "key_stage": "KS2",
+      "strand": "Other: Diagnostic Baselines",
+      "order_index": 84
+    },
+    {
+      "name": "KS3 readiness check (cross-curricular)",
+      "key_stage": "KS3",
+      "strand": "Other: Diagnostic Baselines",
+      "order_index": 85
+    },
+    {
+      "name": "GCSE Foundation gap analysis (cross-curricular)",
+      "key_stage": "KS4",
+      "strand": "Other: Diagnostic Baselines",
+      "order_index": 86
+    },
+    {
+      "name": "SEND access arrangements screening",
+      "key_stage": "KS3",
+      "strand": "Other: Diagnostic Baselines",
+      "order_index": 87
     }
   ]
 }

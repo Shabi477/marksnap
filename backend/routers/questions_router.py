@@ -34,6 +34,7 @@ def _question_response(q: Question) -> dict:
         "image_url": q.image_url,
         "explanation": q.explanation,
         "distractor_rationale": q.distractor_rationale,
+        "skill_type": q.skill_type,
         "year_group": q.year_group,
         "key_stage": q.key_stage,
         "topic_name": q.topic.name if q.topic else None,
@@ -54,6 +55,7 @@ def list_questions(
     key_stage: Optional[str] = None,
     year_group: Optional[str] = None,
     strand: Optional[str] = None,
+    skill_type: Optional[str] = None,
     search: Optional[str] = None,
     status: Optional[str] = None,
     source: Optional[str] = None,
@@ -95,8 +97,13 @@ def list_questions(
     if source:
         query = query.filter(Question.source == source)
     if strand:
-        # Filter by topic's strand
-        query = query.join(Topic).filter(Topic.strand == strand)
+        # Filter by topic's strand — supports exact match and category prefix
+        if ':' in strand:
+            query = query.join(Topic).filter(Topic.strand == strand)
+        else:
+            query = query.join(Topic).filter(or_(Topic.strand == strand, Topic.strand.like(f"{strand}:%")))
+    if skill_type:
+        query = query.filter(Question.skill_type == skill_type)
     if search:
         query = query.filter(Question.question_text.ilike(f"%{search}%"))
 

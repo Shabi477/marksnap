@@ -238,6 +238,7 @@ class QuestionCreate(BaseModel):
     image_url: Optional[str] = None
     explanation: Optional[str] = None
     distractor_rationale: Optional[str] = None
+    skill_type: Optional[str] = None  # fluency/reasoning/problem_solving
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     status: str = "approved"
@@ -255,6 +256,7 @@ class QuestionUpdate(BaseModel):
     topic_id: Optional[int] = None
     explanation: Optional[str] = None
     distractor_rationale: Optional[str] = None
+    skill_type: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     status: Optional[str] = None
@@ -279,6 +281,7 @@ class QuestionResponse(BaseModel):
     image_url: Optional[str] = None
     explanation: Optional[str] = None
     distractor_rationale: Optional[str] = None
+    skill_type: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     topic_name: Optional[str] = None

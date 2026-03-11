@@ -26,7 +26,7 @@ export default function TestBuilder() {
   const [questions, setQuestions] = useState([]);
   const [loadingQ, setLoadingQ] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
-  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', search: '' });
+  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', area: '', skill_type: '', search: '' });
   const [basket, setBasket] = useState([]); // array of question objects
   const [expandedQ, setExpandedQ] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -46,6 +46,7 @@ export default function TestBuilder() {
     if (selectedSubject) {
       topicsAPI.list(selectedSubject, {
         key_stage: (mode === 'pick' ? filters.key_stage : autoKeyStage) || undefined,
+        strand: (mode === 'pick' ? (filters.area || filters.strand) : undefined) || undefined,
       }).then(r => {
         setTopics(r.data);
         // Auto mode: pre-select all topics
@@ -56,14 +57,22 @@ export default function TestBuilder() {
       setTopics([]);
       setAutoTopics([]);
     }
-  }, [selectedSubject, filters.key_stage, autoKeyStage]);
+  }, [selectedSubject, filters.key_stage, filters.strand, filters.area, autoKeyStage]);
 
-  // Derive unique strands from loaded topics
-  const strands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
+  // Detect category:sub format and derive strand options
+  const allStrands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
+  const hasCategories = allStrands.some(s => s.includes(':'));
+  const categories = hasCategories
+    ? [...new Set(allStrands.map(s => s.split(':')[0].trim()))].sort()
+    : [];
+  const areas = hasCategories && filters.strand
+    ? [...new Set(allStrands.filter(s => s.startsWith(filters.strand + ':')).map(s => s.split(':').slice(1).join(':').trim()))].sort()
+    : [];
+  const strands = hasCategories ? categories : allStrands;
 
   useEffect(() => {
     if (mode === 'pick') fetchQuestions();
-  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand]);
+  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand, filters.area, filters.skill_type]);
 
   const fetchQuestions = async () => {
     if (!selectedSubject) { setQuestions([]); return; }
@@ -72,7 +81,9 @@ export default function TestBuilder() {
     if (selectedTopic) params.topic_id = selectedTopic;
     if (filters.difficulty) params.difficulty = filters.difficulty;
     if (filters.key_stage) params.key_stage = filters.key_stage;
-    if (filters.strand) params.strand = filters.strand;
+    if (filters.area) params.strand = filters.area;
+    else if (filters.strand) params.strand = filters.strand;
+    if (filters.skill_type) params.skill_type = filters.skill_type;
     if (filters.search) params.search = filters.search;
     try {
       const r = await questionsAPI.list(params);
@@ -311,10 +322,10 @@ export default function TestBuilder() {
             <div className="lg:col-span-2 space-y-3">
               {/* Filters */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
                   <select
                     value={filters.key_stage}
-                    onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '' }))}
+                    onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '', area: '' }))}
                     className="rounded-lg border-gray-300 text-sm"
                   >
                     <option value="">All Key Stages</option>
@@ -322,13 +333,24 @@ export default function TestBuilder() {
                   </select>
                   <select
                     value={filters.strand}
-                    onChange={e => setFilters(f => ({ ...f, strand: e.target.value }))}
+                    onChange={e => setFilters(f => ({ ...f, strand: e.target.value, area: '' }))}
                     className="rounded-lg border-gray-300 text-sm"
                     disabled={!selectedSubject}
                   >
-                    <option value="">All Strands</option>
+                    <option value="">{hasCategories ? 'All Categories' : 'All Strands'}</option>
                     {strands.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  {hasCategories && (
+                    <select
+                      value={filters.area}
+                      onChange={e => setFilters(f => ({ ...f, area: e.target.value }))}
+                      className="rounded-lg border-gray-300 text-sm"
+                      disabled={!filters.strand}
+                    >
+                      <option value="">All Areas</option>
+                      {areas.map(a => <option key={a} value={`${filters.strand}: ${a}`}>{a}</option>)}
+                    </select>
+                  )}
                   <select
                     value={selectedTopic || ''}
                     onChange={e => setSelectedTopic(e.target.value ? Number(e.target.value) : null)}
@@ -345,6 +367,16 @@ export default function TestBuilder() {
                   >
                     <option value="">All Difficulties</option>
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                  </select>
+                  <select
+                    value={filters.skill_type}
+                    onChange={e => setFilters(f => ({ ...f, skill_type: e.target.value }))}
+                    className="rounded-lg border-gray-300 text-sm"
+                  >
+                    <option value="">All Skills</option>
+                    <option value="fluency">Fluency</option>
+                    <option value="reasoning">Reasoning</option>
+                    <option value="problem_solving">Problem Solving</option>
                   </select>
                   <form onSubmit={handleSearch} className="flex gap-1">
                     <input
@@ -408,6 +440,11 @@ export default function TestBuilder() {
                               </span>
                       {q.strand && (
                                 <span className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700">{q.strand}</span>
+                              )}
+                              {q.skill_type && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-teal-50 text-teal-700">
+                                  {q.skill_type === 'problem_solving' ? 'Problem Solving' : q.skill_type.charAt(0).toUpperCase() + q.skill_type.slice(1)}
+                                </span>
                               )}
                               {q.topic_name && (
                                 <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700">{q.topic_name}</span>

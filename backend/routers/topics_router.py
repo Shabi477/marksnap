@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import Optional
 from database import get_db
 from models import Topic, Subject, Question
@@ -38,7 +39,11 @@ def list_topics(
     if key_stage:
         query = query.filter(Topic.key_stage == key_stage)
     if strand:
-        query = query.filter(Topic.strand == strand)
+        if ':' in strand:
+            query = query.filter(Topic.strand == strand)
+        else:
+            # Match exact (e.g. "Number") or prefix (e.g. "Numeracy" matches "Numeracy: Foundations")
+            query = query.filter(or_(Topic.strand == strand, Topic.strand.like(f"{strand}:%")))
     topics = query.order_by(Topic.order_index, Topic.name).all()
     return [_topic_response(t) for t in topics]
 
