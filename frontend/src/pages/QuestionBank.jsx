@@ -115,13 +115,13 @@ export default function QuestionBank() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-3">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
           {/* Subject */}
           <select
             value={selectedSubject || ''}
             onChange={e => setSelectedSubject(e.target.value ? Number(e.target.value) : null)}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
           >
             <option value="">Select Subject</option>
             {subjects.map(s => (
@@ -133,7 +133,7 @@ export default function QuestionBank() {
           <select
             value={filters.key_stage}
             onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '', area: '' }))}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
           >
             <option value="">All Key Stages</option>
             <option value="KS1">KS1</option>
@@ -146,7 +146,7 @@ export default function QuestionBank() {
           <select
             value={filters.strand}
             onChange={e => setFilters(f => ({ ...f, strand: e.target.value, area: '' }))}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
             disabled={!selectedSubject}
           >
             <option value="">{hasCategories ? 'All Categories' : 'All Strands'}</option>
@@ -160,7 +160,7 @@ export default function QuestionBank() {
             <select
               value={filters.area}
               onChange={e => setFilters(f => ({ ...f, area: e.target.value }))}
-              className="rounded-lg border-gray-300 text-sm"
+              className="rounded-lg border-gray-300 text-xs"
               disabled={!filters.strand}
             >
               <option value="">All Areas</option>
@@ -174,7 +174,7 @@ export default function QuestionBank() {
           <select
             value={selectedTopic || ''}
             onChange={e => setSelectedTopic(e.target.value ? Number(e.target.value) : null)}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
             disabled={!selectedSubject}
           >
             <option value="">All Topics</option>
@@ -187,7 +187,7 @@ export default function QuestionBank() {
           <select
             value={filters.difficulty}
             onChange={e => setFilters(f => ({ ...f, difficulty: e.target.value }))}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
           >
             <option value="">All Difficulties</option>
             <option value="easy">Easy</option>
@@ -199,28 +199,28 @@ export default function QuestionBank() {
           <select
             value={filters.skill_type}
             onChange={e => setFilters(f => ({ ...f, skill_type: e.target.value }))}
-            className="rounded-lg border-gray-300 text-sm"
+            className="rounded-lg border-gray-300 text-xs"
           >
             <option value="">All Skill Types</option>
             <option value="fluency">Fluency</option>
             <option value="reasoning">Reasoning</option>
             <option value="problem_solving">Problem Solving</option>
           </select>
-
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Search questions..."
-              value={filters.search}
-              onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-              className="flex-1 rounded-lg border-gray-300 text-sm"
-            />
-            <button type="submit" className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">
-              Search
-            </button>
-          </form>
         </div>
+
+        {/* Search — own row */}
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search questions..."
+            value={filters.search}
+            onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+            className="flex-1 rounded-lg border-gray-300 text-xs"
+          />
+          <button type="submit" className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">
+            Search
+          </button>
+        </form>
       </div>
 
       {/* Questions */}

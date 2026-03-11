@@ -321,12 +321,12 @@ export default function TestBuilder() {
             {/* LEFT: Question browser (2/3 width) */}
             <div className="lg:col-span-2 space-y-3">
               {/* Filters */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
-                <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 space-y-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                   <select
                     value={filters.key_stage}
                     onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '', area: '' }))}
-                    className="rounded-lg border-gray-300 text-sm"
+                    className="rounded-lg border-gray-300 text-xs"
                   >
                     <option value="">All Key Stages</option>
                     {KEY_STAGES.map(ks => <option key={ks} value={ks}>{ks}</option>)}
@@ -334,7 +334,7 @@ export default function TestBuilder() {
                   <select
                     value={filters.strand}
                     onChange={e => setFilters(f => ({ ...f, strand: e.target.value, area: '' }))}
-                    className="rounded-lg border-gray-300 text-sm"
+                    className="rounded-lg border-gray-300 text-xs"
                     disabled={!selectedSubject}
                   >
                     <option value="">{hasCategories ? 'All Categories' : 'All Strands'}</option>
@@ -344,7 +344,7 @@ export default function TestBuilder() {
                     <select
                       value={filters.area}
                       onChange={e => setFilters(f => ({ ...f, area: e.target.value }))}
-                      className="rounded-lg border-gray-300 text-sm"
+                      className="rounded-lg border-gray-300 text-xs"
                       disabled={!filters.strand}
                     >
                       <option value="">All Areas</option>
@@ -354,7 +354,7 @@ export default function TestBuilder() {
                   <select
                     value={selectedTopic || ''}
                     onChange={e => setSelectedTopic(e.target.value ? Number(e.target.value) : null)}
-                    className="rounded-lg border-gray-300 text-sm"
+                    className="rounded-lg border-gray-300 text-xs"
                     disabled={!selectedSubject}
                   >
                     <option value="">All Topics</option>
@@ -363,7 +363,7 @@ export default function TestBuilder() {
                   <select
                     value={filters.difficulty}
                     onChange={e => setFilters(f => ({ ...f, difficulty: e.target.value }))}
-                    className="rounded-lg border-gray-300 text-sm"
+                    className="rounded-lg border-gray-300 text-xs"
                   >
                     <option value="">All Difficulties</option>
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
@@ -371,26 +371,26 @@ export default function TestBuilder() {
                   <select
                     value={filters.skill_type}
                     onChange={e => setFilters(f => ({ ...f, skill_type: e.target.value }))}
-                    className="rounded-lg border-gray-300 text-sm"
+                    className="rounded-lg border-gray-300 text-xs"
                   >
                     <option value="">All Skills</option>
                     <option value="fluency">Fluency</option>
                     <option value="reasoning">Reasoning</option>
                     <option value="problem_solving">Problem Solving</option>
                   </select>
-                  <form onSubmit={handleSearch} className="flex gap-1">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={filters.search}
-                      onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-                      className="flex-1 rounded-lg border-gray-300 text-sm min-w-0"
-                    />
-                    <button type="submit" className="p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
-                      <Search className="w-4 h-4" />
+                </div>
+                <form onSubmit={handleSearch} className="flex gap-1">
+                  <input
+                    type="text"
+                    placeholder="Search questions..."
+                    value={filters.search}
+                    onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+                    className="flex-1 rounded-lg border-gray-300 text-xs min-w-0"
+                  />
+                  <button type="submit" className="p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">
+                    <Search className="w-4 h-4" />
                     </button>
                   </form>
-                </div>
               </div>
 
               {/* Questions list */}
