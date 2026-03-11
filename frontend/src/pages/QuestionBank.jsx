@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { questionsAPI, topicsAPI, subjectsAPI } from '../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { questionsAPI, topicsAPI, subjectsAPI, getUploadUrl } from '../services/api';
+import toast from 'react-hot-toast';
 
 export default function QuestionBank() {
   const [subjects, setSubjects] = useState([]);
@@ -10,6 +11,8 @@ export default function QuestionBank() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', search: '' });
   const [expandedQ, setExpandedQ] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     subjectsAPI.list().then(r => setSubjects(r.data));
@@ -55,6 +58,29 @@ export default function QuestionBank() {
   const handleSearch = (e) => {
     e.preventDefault();
     fetchQuestions();
+  };
+
+  const handleImageUpload = async (questionId, file) => {
+    setUploadingImage(questionId);
+    try {
+      await questionsAPI.uploadImage(questionId, file);
+      toast.success('Image uploaded');
+      fetchQuestions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Upload failed');
+    }
+    setUploadingImage(null);
+  };
+
+  const handleImageDelete = async (questionId) => {
+    if (!window.confirm('Remove this image?')) return;
+    try {
+      await questionsAPI.deleteImage(questionId);
+      toast.success('Image removed');
+      fetchQuestions();
+    } catch (err) {
+      toast.error('Failed to remove image');
+    }
   };
 
   const difficultyColor = (d) => {
@@ -199,6 +225,13 @@ export default function QuestionBank() {
                       )}
                     </div>
                     <p className="text-sm text-gray-900">{q.question_text}</p>
+                    {q.image_url && (
+                      <img
+                        src={getUploadUrl(q.image_url)}
+                        alt="Question diagram"
+                        className="mt-2 max-h-32 rounded border border-gray-200 object-contain"
+                      />
+                    )}
                   </div>
                   <span className="text-gray-400 ml-2">{expandedQ === q.id ? '▲' : '▼'}</span>
                 </div>
@@ -248,6 +281,43 @@ export default function QuestionBank() {
                       );
                     } catch { return null; }
                   })()}
+                  {/* Image management */}
+                  <div className="mt-3 flex items-center gap-3">
+                    {q.image_url ? (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={getUploadUrl(q.image_url)}
+                          alt="Question diagram"
+                          className="max-h-48 rounded border border-gray-200 object-contain"
+                        />
+                        <button
+                          onClick={() => handleImageDelete(q.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Remove image
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs hover:bg-gray-200 inline-flex items-center gap-1">
+                        {uploadingImage === q.id ? (
+                          <span>Uploading...</span>
+                        ) : (
+                          <>
+                            <span>+ Add image</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => {
+                                if (e.target.files[0]) handleImageUpload(q.id, e.target.files[0]);
+                                e.target.value = '';
+                              }}
+                            />
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
                     <span>Source: {q.source}</span>
                     {q.creator_name && <span>By: {q.creator_name}</span>}

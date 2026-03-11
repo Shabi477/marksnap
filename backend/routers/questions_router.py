@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from database import get_db
@@ -6,6 +7,8 @@ from models import Question, Topic, Subject, Teacher
 from schemas import QuestionCreate, QuestionUpdate, QuestionResponse
 from auth import get_current_teacher
 from typing import Optional
+import os
+import uuid
 
 router = APIRouter(prefix="/api/questions", tags=["questions"])
 
@@ -216,6 +219,86 @@ def delete_question(
     # Soft delete
     q.is_active = False
     db.commit()
+
+
+ALLOWED_IMAGE_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+QUESTION_IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "question_images")
+os.makedirs(QUESTION_IMAGE_DIR, exist_ok=True)
+
+
+@router.post("/{question_id}/image")
+def upload_question_image(
+    question_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    """Upload an image for a question (geometry diagrams, charts, etc.)."""
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    can_edit = (
+        teacher.role == "super_admin"
+        or q.created_by == teacher.id
+        or (q.source == "school" and teacher.role in ("school_admin", "hod") and q.school_id == teacher.school_id)
+    )
+    if not can_edit:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this question")
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_IMAGE_EXT:
+        raise HTTPException(status_code=400, detail=f"Only image files allowed ({', '.join(ALLOWED_IMAGE_EXT)})")
+
+    content = file.file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB limit
+        raise HTTPException(status_code=400, detail="File too large (max 5MB)")
+
+    # Delete old image if exists
+    if q.image_url:
+        old_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), q.image_url)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    # Save with unique name
+    safe_name = f"q_{question_id}_{uuid.uuid4().hex[:8]}{ext}"
+    file_path = os.path.join(QUESTION_IMAGE_DIR, safe_name)
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    q.image_url = f"uploads/question_images/{safe_name}"
+    db.commit()
+    db.refresh(q)
+    return {"message": "Image uploaded", "image_url": q.image_url}
+
+
+@router.delete("/{question_id}/image")
+def delete_question_image(
+    question_id: int,
+    db: Session = Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    """Remove the image from a question."""
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    can_edit = (
+        teacher.role == "super_admin"
+        or q.created_by == teacher.id
+        or (q.source == "school" and teacher.role in ("school_admin", "hod") and q.school_id == teacher.school_id)
+    )
+    if not can_edit:
+        raise HTTPException(status_code=403, detail="Not authorised to edit this question")
+
+    if q.image_url:
+        old_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), q.image_url)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        q.image_url = None
+        db.commit()
+
+    return {"message": "Image removed"}
 
 
 @router.post("/bulk", response_model=list[QuestionResponse], status_code=201)

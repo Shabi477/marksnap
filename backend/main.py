@@ -10,7 +10,7 @@ from models import Subject
 from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router, subjects_router, topics_router, questions_router
 import os
 
-DEFAULT_SUBJECTS = ["Maths", "English", "Science"]
+DEFAULT_SUBJECTS = ["Maths", "English", "Science", "Intervention Diagnostics"]
 
 
 @asynccontextmanager
@@ -58,6 +58,7 @@ app.include_router(questions_router.router)
 # Serve uploads directory
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.get("/api/health")

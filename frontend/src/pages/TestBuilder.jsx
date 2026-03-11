@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { questionsAPI, topicsAPI, subjectsAPI, testGenerateAPI } from '../services/api';
+import { questionsAPI, topicsAPI, subjectsAPI, testGenerateAPI, getUploadUrl } from '../services/api';
 import {
   ArrowLeft, Search, Plus, Minus, CheckCircle2, Sparkles, Eye,
   ChevronDown, ChevronUp, Trash2, Shuffle, GripVertical,
@@ -255,6 +255,9 @@ export default function TestBuilder() {
                         <span className="text-sm font-bold text-gray-400 mt-0.5">{idx + 1}.</span>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900 mb-2">{q.question_text}</p>
+                          {q.image_url && (
+                            <img src={getUploadUrl(q.image_url)} alt="" className="max-h-32 rounded border border-gray-200 object-contain mb-2" />
+                          )}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                             {['A', 'B', 'C', 'D', 'E'].map(letter => {
                               const text = q[`option_${letter.toLowerCase()}`];
@@ -412,6 +415,9 @@ export default function TestBuilder() {
                               {q.year_group && <span className="text-xs text-gray-400">{q.year_group}</span>}
                             </div>
                             <p className="text-sm text-gray-900 leading-snug">{q.question_text}</p>
+                            {q.image_url && (
+                              <img src={getUploadUrl(q.image_url)} alt="" className="mt-1 max-h-24 rounded border border-gray-200 object-contain" />
+                            )}
                           </div>
 
                           {/* Expand toggle */}

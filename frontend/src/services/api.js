@@ -4,6 +4,10 @@ const baseURL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : '/api';
 
+// For uploaded files (images, etc.) - resolve to backend root
+const backendRoot = import.meta.env.VITE_API_URL || '';
+export const getUploadUrl = (path) => path ? `${backendRoot}/${path}` : null;
+
 const api = axios.create({
   baseURL,
 });
@@ -155,6 +159,14 @@ export const questionsAPI = {
   update: (id, data) => api.put(`/questions/${id}`, data),
   delete: (id) => api.delete(`/questions/${id}`),
   bulkCreate: (questions) => api.post('/questions/bulk', questions),
+  uploadImage: (id, file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post(`/questions/${id}/image`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  deleteImage: (id) => api.delete(`/questions/${id}/image`),
 };
 
 // --- Test Generation from Bank ---
