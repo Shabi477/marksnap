@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { testsAPI, classesAPI } from '../services/api';
 import {
-  ArrowLeft, Download, ScanLine, BarChart3, Save, FileText, CheckCircle2,
+  ArrowLeft, Download, ScanLine, BarChart3, Save, FileText, CheckCircle2, Camera,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -149,9 +149,13 @@ export default function TestDetail() {
             <Download className="w-4 h-4" />
             Download Sheets
           </button>
-          <Link to={`/scan/${testId}`} className="btn-primary flex items-center gap-2">
+          <Link to={`/live-scan/${testId}`} className="btn-primary flex items-center gap-2">
+            <Camera className="w-4 h-4" />
+            Live Scan
+          </Link>
+          <Link to={`/scan/${testId}`} className="btn-secondary flex items-center gap-2">
             <ScanLine className="w-4 h-4" />
-            Scan Answers
+            Upload Scans
           </Link>
           <Link to={`/results/${testId}`} className="btn-secondary flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />

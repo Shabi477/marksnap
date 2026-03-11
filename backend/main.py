@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import init_db
-from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router
+from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router, subjects_router
 import os
 
 
@@ -36,6 +36,7 @@ app.include_router(tests_router.router)
 app.include_router(scan_router.router)
 app.include_router(results_router.router)
 app.include_router(school_router.router)
+app.include_router(subjects_router.router)
 
 # Serve uploads directory
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")

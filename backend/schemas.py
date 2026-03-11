@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 # --- School ---
@@ -47,6 +47,25 @@ class TeacherResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+# --- Subjects ---
+class SubjectCreate(BaseModel):
+    name: str
+
+class SubjectResponse(BaseModel):
+    id: int
+    name: str
+    school_id: int
+    teacher_count: int = 0
+    hod_names: list[str] = []
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class SubjectTeacherAssign(BaseModel):
+    teacher_id: int
+    is_hod: bool = False
 
 
 # --- Classes ---
@@ -100,11 +119,18 @@ class SectionConfig(BaseModel):
 class TestCreate(BaseModel):
     name: str
     sections: list[SectionConfig]
+    subject_id: Optional[int] = None
+    test_date: Optional[str] = None  # ISO date string e.g. '2026-03-10'
 
 class TestResponse(BaseModel):
     id: int
     name: str
     teacher_id: int
+    subject_id: Optional[int] = None
+    subject_name: Optional[str] = None
+    test_date: Optional[datetime] = None
+    has_answer_key: bool = False
+    has_test_file: bool = False
     sections: list[SectionConfig] = []
     created_at: datetime
     class Config:
@@ -130,8 +156,38 @@ class ScanBatchResponse(BaseModel):
     processed_pages: int
     uploaded_at: datetime
     error_message: Optional[str] = None
+    flagged_count: int = 0
     class Config:
         from_attributes = True
+
+class ScanResultResponse(BaseModel):
+    id: int
+    scan_batch_id: int
+    student_id: Optional[int] = None
+    student_code: Optional[str] = None
+    student_name: Optional[str] = None
+    page_number: int
+    section_name: str
+    question_number: int
+    selected_answer: Optional[str] = None
+    is_correct: Optional[bool] = None
+    confidence: float
+    needs_review: bool = False
+    class Config:
+        from_attributes = True
+
+class ScanResultCorrection(BaseModel):
+    selected_answer: str
+
+class LiveScanResponse(BaseModel):
+    student_name: Optional[str] = None
+    student_code: Optional[str] = None
+    score: int
+    total: int
+    percentage: float
+    flagged_count: int = 0
+    answers: dict[str, Optional[str]] = {}
+    correct: dict[str, bool] = {}
 
 
 # --- Test Assignments ---
@@ -167,3 +223,21 @@ class StudentResult(BaseModel):
     score: int
     total: int
     percentage: float
+
+class StudentProgressEntry(BaseModel):
+    test_id: int
+    test_name: str
+    subject_name: Optional[str] = None
+    test_date: Optional[datetime] = None
+    score: int
+    total: int
+    percentage: float
+    scanned_at: Optional[datetime] = None
+
+class StudentProgressReport(BaseModel):
+    student_id: int
+    student_name: str
+    student_code: str
+    class_name: str
+    tests: list[StudentProgressEntry] = []
+    average_percentage: float = 0.0

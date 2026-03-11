@@ -101,6 +101,14 @@ export const scanAPI = {
   },
   listBatches: (testId) => api.get(`/scan/batches/${testId}`),
   batchStatus: (batchId) => api.get(`/scan/batch/${batchId}/status`),
+  getFlagged: (batchId) => api.get(`/scan/batch/${batchId}/flagged`),
+  correctResult: (resultId, selectedAnswer) =>
+    api.put(`/scan/result/${resultId}/correct`, { selected_answer: selectedAnswer }),
+  scanLive: (testId, imageBlob) => {
+    const formData = new FormData();
+    formData.append('file', imageBlob, 'scan.jpg');
+    return api.post(`/scan/live/${testId}`, formData);
+  },
 };
 
 // --- Results ---

@@ -237,7 +237,12 @@ def _find_section_for_question(question_num, sections):
 
 
 def _analyze_bubbles(bubbles, thresh_image):
-    """Analyze which bubble in a row is filled."""
+    """
+    Analyze which bubble in a row is filled.
+    Supports answer changes: if a student crosses out a bubble (fills it very
+    heavily, >85%), that bubble is treated as cancelled. The intended answer
+    is the remaining filled bubble (30-85% fill).
+    """
     if not bubbles:
         return None, 0.0
 
@@ -260,11 +265,36 @@ def _analyze_bubbles(bubbles, thresh_image):
     if not fill_ratios:
         return None, 0.0
 
+    # --- Answer-change detection ---
+    # A bubble filled >85% is considered "crossed out" / cancelled by the student.
+    # The intended answer is the one filled between 30-85%.
+    CANCEL_THRESHOLD = 0.85
+    FILL_THRESHOLD = 0.30
+
+    cancelled = [i for i, r in enumerate(fill_ratios) if r >= CANCEL_THRESHOLD]
+    filled = [i for i, r in enumerate(fill_ratios) if FILL_THRESHOLD <= r < CANCEL_THRESHOLD]
+
+    if cancelled and filled:
+        # Student changed their answer: pick the non-cancelled filled bubble
+        if len(filled) == 1:
+            idx = filled[0]
+            # High confidence — clear correction detected
+            confidence = 0.85
+            if idx < len(options):
+                return options[idx], confidence
+        else:
+            # Multiple bubbles filled (not cancelled) — ambiguous, pick highest
+            best = max(filled, key=lambda i: fill_ratios[i])
+            confidence = 0.4  # Low confidence — flag for review
+            if best < len(options):
+                return options[best], confidence
+
+    # --- Normal detection (no answer change) ---
     max_ratio = max(fill_ratios)
     max_idx = fill_ratios.index(max_ratio)
 
     # Threshold: bubble must be significantly filled
-    if max_ratio < 0.3:
+    if max_ratio < FILL_THRESHOLD:
         return None, max_ratio  # No bubble filled enough
 
     # Confidence: how much more filled is the max vs second highest

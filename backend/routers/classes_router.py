@@ -15,7 +15,7 @@ def _get_visible_classes(teacher: Teacher, db: Session):
     """Return classes visible to this teacher based on role."""
     if teacher.role == "standalone":
         return db.query(ClassGroup).filter(ClassGroup.owner_id == teacher.id).all()
-    elif teacher.role == "hod":
+    elif teacher.role in ("hod", "school_admin"):
         return db.query(ClassGroup).filter(ClassGroup.school_id == teacher.school_id).all()
     else:  # school teacher
         return teacher.assigned_classes
@@ -25,7 +25,7 @@ def _can_access_class(teacher: Teacher, class_group: ClassGroup) -> bool:
     """Check if teacher can access this class."""
     if teacher.role == "standalone":
         return class_group.owner_id == teacher.id
-    elif teacher.role == "hod":
+    elif teacher.role in ("hod", "school_admin"):
         return class_group.school_id == teacher.school_id
     else:
         return class_group in teacher.assigned_classes

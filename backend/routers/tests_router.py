@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, teacher_classes
+from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, teacher_classes
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
@@ -25,6 +25,11 @@ def _build_test_response(test: Test) -> TestResponse:
     ]
     return TestResponse(
         id=test.id, name=test.name, teacher_id=test.teacher_id,
+        subject_id=test.subject_id,
+        subject_name=test.subject.name if test.subject else None,
+        test_date=test.test_date,
+        has_answer_key=len(test.answer_keys) > 0,
+        has_test_file=bool(test.test_file_path),
         sections=sections, created_at=test.created_at,
     )
 
@@ -32,7 +37,7 @@ def _build_test_response(test: Test) -> TestResponse:
 def _can_access_test(teacher: Teacher, test: Test, db: Session = None) -> bool:
     if test.teacher_id == teacher.id:
         return True
-    if teacher.role == "hod" and teacher.school_id:
+    if teacher.role in ("hod", "school_admin") and teacher.school_id:
         test_owner = test.teacher
         return test_owner and test_owner.school_id == teacher.school_id
     # Check if test is assigned to this teacher
@@ -67,7 +72,7 @@ def list_tests(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    if teacher.role == "hod" and teacher.school_id:
+    if teacher.role in ("hod", "school_admin") and teacher.school_id:
         school_teacher_ids = [t.id for t in db.query(Teacher).filter(Teacher.school_id == teacher.school_id).all()]
         tests = db.query(Test).filter(Test.teacher_id.in_(school_teacher_ids)).all()
     else:
@@ -120,6 +125,21 @@ def create_test(
     teacher: Teacher = Depends(get_current_teacher),
 ):
     test = Test(name=data.name, teacher_id=teacher.id)
+
+    # Set optional subject
+    if data.subject_id:
+        subject = db.query(Subject).filter(Subject.id == data.subject_id).first()
+        if subject:
+            test.subject_id = data.subject_id
+
+    # Set optional test date
+    if data.test_date:
+        from datetime import datetime
+        try:
+            test.test_date = datetime.fromisoformat(data.test_date)
+        except ValueError:
+            pass
+
     db.add(test)
     db.flush()
 
@@ -246,3 +266,59 @@ def delete_test(
     db.delete(test)
     db.commit()
     return {"message": "Test deleted"}
+
+
+@router.post("/{test_id}/upload-paper")
+def upload_test_paper(
+    test_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Upload a reference test paper (PDF or image)."""
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test, db):
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    allowed = {".pdf", ".png", ".jpg", ".jpeg"}
+    import os
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Only PDF, PNG, JPG files allowed")
+
+    upload_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "test_papers")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    safe_name = f"test_{test_id}{ext}"
+    file_path = os.path.join(upload_dir, safe_name)
+
+    with open(file_path, "wb") as f:
+        content = file.file.read()
+        if len(content) > 10 * 1024 * 1024:  # 10MB limit
+            raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+        f.write(content)
+
+    test.test_file_path = f"uploads/test_papers/{safe_name}"
+    db.commit()
+    return {"message": "Test paper uploaded", "file_path": test.test_file_path}
+
+
+@router.get("/{test_id}/paper")
+def download_test_paper(
+    test_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Download the uploaded test paper."""
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test, db):
+        raise HTTPException(status_code=404, detail="Test not found")
+    if not test.test_file_path:
+        raise HTTPException(status_code=404, detail="No test paper uploaded")
+
+    import os
+    file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), test.test_file_path)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
+
+    return FileResponse(file_path, filename=os.path.basename(file_path))
