@@ -5,6 +5,6 @@
   "installCommand": "cd frontend && npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "${BACKEND_URL}/api/:path*" }
+    { "source": "/api/:path*", "destination": "https://marksnap-production.up.railway.app/api/:path*" }
   ]
 }
