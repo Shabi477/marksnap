@@ -3,7 +3,7 @@ import { questionsAPI, topicsAPI, subjectsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { teacher } = useAuth();
   const [tab, setTab] = useState('questions');
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -25,7 +25,7 @@ export default function AdminPanel() {
   const [topicForm, setTopicForm] = useState({ name: '', order_index: 0 });
   const [showTopicForm, setShowTopicForm] = useState(false);
 
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isSuperAdmin = teacher?.role === 'super_admin';
 
   useEffect(() => {
     subjectsAPI.list().then(r => setSubjects(r.data));
