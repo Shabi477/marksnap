@@ -203,12 +203,16 @@ class LiveScanResponse(BaseModel):
 # --- Topics ---
 class TopicCreate(BaseModel):
     name: str
+    key_stage: Optional[str] = None
+    strand: Optional[str] = None
     order_index: int = 0
 
 class TopicResponse(BaseModel):
     id: int
     name: str
     subject_id: int
+    key_stage: Optional[str] = None
+    strand: Optional[str] = None
     order_index: int = 0
     question_count: int = 0
     created_at: datetime
@@ -233,6 +237,7 @@ class QuestionCreate(BaseModel):
     school_id: Optional[int] = None
     image_url: Optional[str] = None
     explanation: Optional[str] = None
+    distractor_rationale: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     status: str = "approved"
@@ -249,6 +254,7 @@ class QuestionUpdate(BaseModel):
     difficulty: Optional[str] = None
     topic_id: Optional[int] = None
     explanation: Optional[str] = None
+    distractor_rationale: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     status: Optional[str] = None
@@ -272,9 +278,11 @@ class QuestionResponse(BaseModel):
     creator_name: Optional[str] = None
     image_url: Optional[str] = None
     explanation: Optional[str] = None
+    distractor_rationale: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
     topic_name: Optional[str] = None
+    strand: Optional[str] = None
     subject_name: Optional[str] = None
     is_active: bool = True
     status: str = "approved"

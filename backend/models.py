@@ -117,6 +117,8 @@ class Topic(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)
+    key_stage = Column(String, nullable=True)  # KS1/KS2/KS3/KS4
+    strand = Column(String, nullable=True)  # e.g. "Number", "Algebra", "Geometry & Measures"
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -144,6 +146,7 @@ class Question(Base):
     created_by = Column(Integer, ForeignKey("teachers.id"), nullable=True)
     image_url = Column(String, nullable=True)
     explanation = Column(Text, nullable=True)
+    distractor_rationale = Column(Text, nullable=True)  # JSON: {"B": "reason", "C": "reason", ...}
     year_group = Column(String, nullable=True)  # e.g. "Year 7", "Year 8"
     key_stage = Column(String, nullable=True)  # KS1-KS5
     is_active = Column(Boolean, default=True)

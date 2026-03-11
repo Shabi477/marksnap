@@ -32,21 +32,40 @@ def seed_from_file(db, filepath: str):
 
     for topic_data in data["topics"]:
         topic_name = topic_data["name"]
-        topic = db.query(Topic).filter(
+        topic_ks = topic_data.get("key_stage")
+
+        # Match by name + key_stage to avoid cross-KS collisions
+        topic_query = db.query(Topic).filter(
             Topic.name == topic_name, Topic.subject_id == subject.id
-        ).first()
+        )
+        if topic_ks:
+            topic_query = topic_query.filter(Topic.key_stage == topic_ks)
+        topic = topic_query.first()
 
         if not topic:
             topic = Topic(
                 name=topic_name,
                 subject_id=subject.id,
+                key_stage=topic_data.get("key_stage"),
+                strand=topic_data.get("strand"),
                 order_index=topic_data.get("order_index", 0),
             )
             db.add(topic)
             db.flush()
-            print(f"  Created topic: {topic_name}")
+            print(f"  Created topic: {topic_name} ({topic_data.get('key_stage', '')} / {topic_data.get('strand', '')})")
+        else:
+            # Backfill key_stage and strand if missing
+            updated = False
+            if not topic.key_stage and topic_data.get("key_stage"):
+                topic.key_stage = topic_data["key_stage"]
+                updated = True
+            if not topic.strand and topic_data.get("strand"):
+                topic.strand = topic_data["strand"]
+                updated = True
+            if updated:
+                db.flush()
 
-        for q_data in topic_data["questions"]:
+        for q_data in topic_data.get("questions", []):
             # Check if question already exists (by text hash)
             q_hash = hash_question(q_data["question_text"])
             existing = db.query(Question).filter(
@@ -74,6 +93,7 @@ def seed_from_file(db, filepath: str):
                 school_id=None,
                 created_by=None,
                 explanation=q_data.get("explanation"),
+                distractor_rationale=json.dumps(q_data["distractor_rationale"]) if q_data.get("distractor_rationale") else None,
                 year_group=q_data.get("year_group"),
                 key_stage=q_data.get("key_stage"),
                 is_active=True,

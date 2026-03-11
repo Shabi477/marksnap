@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 from database import get_db
 from models import Topic, Subject, Question
 from schemas import TopicCreate, TopicResponse
@@ -13,6 +14,8 @@ def _topic_response(topic: Topic) -> dict:
         "id": topic.id,
         "name": topic.name,
         "subject_id": topic.subject_id,
+        "key_stage": topic.key_stage,
+        "strand": topic.strand,
         "order_index": topic.order_index,
         "question_count": len(topic.questions),
         "created_at": topic.created_at,
@@ -22,6 +25,8 @@ def _topic_response(topic: Topic) -> dict:
 @router.get("", response_model=list[TopicResponse])
 def list_topics(
     subject_id: int,
+    key_stage: Optional[str] = None,
+    strand: Optional[str] = None,
     db: Session = Depends(get_db),
     teacher=Depends(get_current_teacher),
 ):
@@ -29,12 +34,12 @@ def list_topics(
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    topics = (
-        db.query(Topic)
-        .filter(Topic.subject_id == subject_id)
-        .order_by(Topic.order_index, Topic.name)
-        .all()
-    )
+    query = db.query(Topic).filter(Topic.subject_id == subject_id)
+    if key_stage:
+        query = query.filter(Topic.key_stage == key_stage)
+    if strand:
+        query = query.filter(Topic.strand == strand)
+    topics = query.order_by(Topic.order_index, Topic.name).all()
     return [_topic_response(t) for t in topics]
 
 
@@ -53,7 +58,7 @@ def create_topic(
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    topic = Topic(name=data.name, subject_id=subject_id, order_index=data.order_index)
+    topic = Topic(name=data.name, subject_id=subject_id, key_stage=data.key_stage, strand=data.strand, order_index=data.order_index)
     db.add(topic)
     db.commit()
     db.refresh(topic)
@@ -76,6 +81,8 @@ def update_topic(
         raise HTTPException(status_code=404, detail="Topic not found")
 
     topic.name = data.name
+    topic.key_stage = data.key_stage
+    topic.strand = data.strand
     topic.order_index = data.order_index
     db.commit()
     db.refresh(topic)

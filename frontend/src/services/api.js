@@ -136,7 +136,12 @@ export const subjectsAPI = {
 
 // --- Topics ---
 export const topicsAPI = {
-  list: (subjectId) => api.get(`/subjects/${subjectId}/topics`),
+  list: (subjectId, { key_stage, strand } = {}) => {
+    const params = {};
+    if (key_stage) params.key_stage = key_stage;
+    if (strand) params.strand = strand;
+    return api.get(`/subjects/${subjectId}/topics`, { params });
+  },
   create: (subjectId, data) => api.post(`/subjects/${subjectId}/topics`, data),
   update: (subjectId, topicId, data) => api.put(`/subjects/${subjectId}/topics/${topicId}`, data),
   delete: (subjectId, topicId) => api.delete(`/subjects/${subjectId}/topics/${topicId}`),

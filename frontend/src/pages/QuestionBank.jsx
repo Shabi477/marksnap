@@ -8,7 +8,7 @@ export default function QuestionBank() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', search: '' });
+  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', search: '' });
   const [expandedQ, setExpandedQ] = useState(null);
 
   useEffect(() => {
@@ -17,16 +17,22 @@ export default function QuestionBank() {
 
   useEffect(() => {
     if (selectedSubject) {
-      topicsAPI.list(selectedSubject).then(r => setTopics(r.data));
+      topicsAPI.list(selectedSubject, {
+        key_stage: filters.key_stage || undefined,
+        strand: filters.strand || undefined,
+      }).then(r => setTopics(r.data));
       setSelectedTopic(null);
     } else {
       setTopics([]);
     }
-  }, [selectedSubject]);
+  }, [selectedSubject, filters.key_stage, filters.strand]);
+
+  // Derive unique strands from loaded topics
+  const strands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
 
   useEffect(() => {
     fetchQuestions();
-  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage]);
+  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand]);
 
   const fetchQuestions = async () => {
     if (!selectedSubject) { setQuestions([]); return; }
@@ -36,6 +42,7 @@ export default function QuestionBank() {
       if (selectedTopic) params.topic_id = selectedTopic;
       if (filters.difficulty) params.difficulty = filters.difficulty;
       if (filters.key_stage) params.key_stage = filters.key_stage;
+      if (filters.strand) params.strand = filters.strand;
       if (filters.search) params.search = filters.search;
       const r = await questionsAPI.list(params);
       setQuestions(r.data);
@@ -71,7 +78,7 @@ export default function QuestionBank() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {/* Subject */}
           <select
             value={selectedSubject || ''}
@@ -81,6 +88,32 @@ export default function QuestionBank() {
             <option value="">Select Subject</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+
+          {/* Key Stage */}
+          <select
+            value={filters.key_stage}
+            onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '' }))}
+            className="rounded-lg border-gray-300 text-sm"
+          >
+            <option value="">All Key Stages</option>
+            <option value="KS1">KS1</option>
+            <option value="KS2">KS2</option>
+            <option value="KS3">KS3</option>
+            <option value="KS4">KS4</option>
+          </select>
+
+          {/* Strand */}
+          <select
+            value={filters.strand}
+            onChange={e => setFilters(f => ({ ...f, strand: e.target.value }))}
+            className="rounded-lg border-gray-300 text-sm"
+            disabled={!selectedSubject}
+          >
+            <option value="">All Strands</option>
+            {strands.map(s => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
 
@@ -107,18 +140,6 @@ export default function QuestionBank() {
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
-          </select>
-
-          {/* Key Stage */}
-          <select
-            value={filters.key_stage}
-            onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value }))}
-            className="rounded-lg border-gray-300 text-sm"
-          >
-            <option value="">All Key Stages</option>
-            <option value="KS3">KS3</option>
-            <option value="KS4">KS4</option>
-            <option value="KS5">KS5</option>
           </select>
 
           {/* Search */}
@@ -163,6 +184,11 @@ export default function QuestionBank() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColor(q.difficulty)}`}>
                         {q.difficulty}
                       </span>
+                      {q.strand && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700">
+                          {q.strand}
+                        </span>
+                      )}
                       {q.topic_name && (
                         <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700">
                           {q.topic_name}
@@ -206,6 +232,22 @@ export default function QuestionBank() {
                       <span className="font-medium">Explanation:</span> {q.explanation}
                     </div>
                   )}
+                  {q.distractor_rationale && (() => {
+                    try {
+                      const rationale = typeof q.distractor_rationale === 'string'
+                        ? JSON.parse(q.distractor_rationale) : q.distractor_rationale;
+                      return (
+                        <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-800 mt-2">
+                          <span className="font-medium">Distractor Rationale:</span>
+                          <ul className="mt-1 space-y-0.5 list-disc list-inside">
+                            {Object.entries(rationale).map(([letter, reason]) => (
+                              <li key={letter}><span className="font-medium">{letter})</span> {reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    } catch { return null; }
+                  })()}
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
                     <span>Source: {q.source}</span>
                     {q.creator_name && <span>By: {q.creator_name}</span>}

@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast';
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
-const KEY_STAGES = ['KS3', 'KS4', 'KS5'];
+const KEY_STAGES = ['KS1', 'KS2', 'KS3', 'KS4'];
 
 export default function TestBuilder() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function TestBuilder() {
   const [questions, setQuestions] = useState([]);
   const [loadingQ, setLoadingQ] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
-  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', search: '' });
+  const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', search: '' });
   const [basket, setBasket] = useState([]); // array of question objects
   const [expandedQ, setExpandedQ] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -44,21 +44,26 @@ export default function TestBuilder() {
 
   useEffect(() => {
     if (selectedSubject) {
-      topicsAPI.list(selectedSubject).then(r => {
+      topicsAPI.list(selectedSubject, {
+        key_stage: (mode === 'pick' ? filters.key_stage : autoKeyStage) || undefined,
+      }).then(r => {
         setTopics(r.data);
         // Auto mode: pre-select all topics
-        setAutoTopics(r.data.map(t => t.id));
+        if (mode === 'auto') setAutoTopics(r.data.map(t => t.id));
       });
       setSelectedTopic(null);
     } else {
       setTopics([]);
       setAutoTopics([]);
     }
-  }, [selectedSubject]);
+  }, [selectedSubject, filters.key_stage, autoKeyStage]);
+
+  // Derive unique strands from loaded topics
+  const strands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
 
   useEffect(() => {
     if (mode === 'pick') fetchQuestions();
-  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage]);
+  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand]);
 
   const fetchQuestions = async () => {
     if (!selectedSubject) { setQuestions([]); return; }
@@ -67,6 +72,7 @@ export default function TestBuilder() {
     if (selectedTopic) params.topic_id = selectedTopic;
     if (filters.difficulty) params.difficulty = filters.difficulty;
     if (filters.key_stage) params.key_stage = filters.key_stage;
+    if (filters.strand) params.strand = filters.strand;
     if (filters.search) params.search = filters.search;
     try {
       const r = await questionsAPI.list(params);
@@ -302,7 +308,24 @@ export default function TestBuilder() {
             <div className="lg:col-span-2 space-y-3">
               {/* Filters */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <select
+                    value={filters.key_stage}
+                    onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '' }))}
+                    className="rounded-lg border-gray-300 text-sm"
+                  >
+                    <option value="">All Key Stages</option>
+                    {KEY_STAGES.map(ks => <option key={ks} value={ks}>{ks}</option>)}
+                  </select>
+                  <select
+                    value={filters.strand}
+                    onChange={e => setFilters(f => ({ ...f, strand: e.target.value }))}
+                    className="rounded-lg border-gray-300 text-sm"
+                    disabled={!selectedSubject}
+                  >
+                    <option value="">All Strands</option>
+                    {strands.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                   <select
                     value={selectedTopic || ''}
                     onChange={e => setSelectedTopic(e.target.value ? Number(e.target.value) : null)}
@@ -319,14 +342,6 @@ export default function TestBuilder() {
                   >
                     <option value="">All Difficulties</option>
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
-                  </select>
-                  <select
-                    value={filters.key_stage}
-                    onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value }))}
-                    className="rounded-lg border-gray-300 text-sm"
-                  >
-                    <option value="">All Key Stages</option>
-                    {KEY_STAGES.map(ks => <option key={ks} value={ks}>{ks}</option>)}
                   </select>
                   <form onSubmit={handleSearch} className="flex gap-1">
                     <input
@@ -388,6 +403,9 @@ export default function TestBuilder() {
                               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColor(q.difficulty)}`}>
                                 {q.difficulty}
                               </span>
+                      {q.strand && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700">{q.strand}</span>
+                              )}
                               {q.topic_name && (
                                 <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700">{q.topic_name}</span>
                               )}
@@ -546,35 +564,133 @@ export default function TestBuilder() {
               </div>
             ) : (
               <>
-                {/* Topics */}
+                {/* Key Stage filter for auto */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Key Stage</label>
+                  <select
+                    value={autoKeyStage}
+                    onChange={e => setAutoKeyStage(e.target.value)}
+                    className="w-48 rounded-lg border-gray-300 text-sm"
+                  >
+                    <option value="">All Key Stages</option>
+                    {KEY_STAGES.map(ks => <option key={ks} value={ks}>{ks}</option>)}
+                  </select>
+                </div>
+
+                {/* Topics grouped by strand */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Topics ({autoTopics.length} of {topics.length} selected)
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {topics.map(t => {
-                      const selected = autoTopics.includes(t.id);
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setAutoTopics(selected
-                              ? autoTopics.filter(id => id !== t.id)
-                              : [...autoTopics, t.id]
-                            );
-                          }}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                            selected
-                              ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {t.name}
-                          <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {strands.length > 0 ? (
+                    <div className="space-y-3">
+                      {strands.map(strand => {
+                        const strandTopics = topics.filter(t => t.strand === strand);
+                        if (strandTopics.length === 0) return null;
+                        const allSelected = strandTopics.every(t => autoTopics.includes(t.id));
+                        return (
+                          <div key={strand}>
+                            <button
+                              onClick={() => {
+                                const ids = strandTopics.map(t => t.id);
+                                if (allSelected) {
+                                  setAutoTopics(autoTopics.filter(id => !ids.includes(id)));
+                                } else {
+                                  setAutoTopics([...new Set([...autoTopics, ...ids])]);
+                                }
+                              }}
+                              className={`text-xs font-semibold mb-1 px-2 py-0.5 rounded ${allSelected ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            >
+                              {strand} ({strandTopics.length})
+                            </button>
+                            <div className="flex flex-wrap gap-1.5 ml-1">
+                              {strandTopics.map(t => {
+                                const selected = autoTopics.includes(t.id);
+                                return (
+                                  <button
+                                    key={t.id}
+                                    onClick={() => {
+                                      setAutoTopics(selected
+                                        ? autoTopics.filter(id => id !== t.id)
+                                        : [...autoTopics, t.id]
+                                      );
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                      selected
+                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t.name}
+                                    <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {/* Topics without a strand */}
+                      {(() => {
+                        const noStrand = topics.filter(t => !t.strand);
+                        if (noStrand.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="text-xs font-semibold text-gray-500 mb-1 block">Other</span>
+                            <div className="flex flex-wrap gap-1.5 ml-1">
+                              {noStrand.map(t => {
+                                const selected = autoTopics.includes(t.id);
+                                return (
+                                  <button
+                                    key={t.id}
+                                    onClick={() => {
+                                      setAutoTopics(selected
+                                        ? autoTopics.filter(id => id !== t.id)
+                                        : [...autoTopics, t.id]
+                                      );
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                      selected
+                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {t.name}
+                                    <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {topics.map(t => {
+                        const selected = autoTopics.includes(t.id);
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setAutoTopics(selected
+                                ? autoTopics.filter(id => id !== t.id)
+                                : [...autoTopics, t.id]
+                              );
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                              selected
+                                ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {t.name}
+                            <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="mt-2 flex gap-2">
                     <button onClick={() => setAutoTopics(topics.map(t => t.id))} className="text-xs text-brand-600 hover:text-brand-800">Select all</button>
                     <button onClick={() => setAutoTopics([])} className="text-xs text-gray-500 hover:text-gray-700">Deselect all</button>

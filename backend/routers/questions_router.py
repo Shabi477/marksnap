@@ -30,9 +30,11 @@ def _question_response(q: Question) -> dict:
         "creator_name": q.creator.name if q.creator else None,
         "image_url": q.image_url,
         "explanation": q.explanation,
+        "distractor_rationale": q.distractor_rationale,
         "year_group": q.year_group,
         "key_stage": q.key_stage,
         "topic_name": q.topic.name if q.topic else None,
+        "strand": q.topic.strand if q.topic else None,
         "subject_name": q.subject.name if q.subject else None,
         "is_active": q.is_active,
         "status": q.status,
@@ -48,6 +50,7 @@ def list_questions(
     difficulty: Optional[str] = None,
     key_stage: Optional[str] = None,
     year_group: Optional[str] = None,
+    strand: Optional[str] = None,
     search: Optional[str] = None,
     status: Optional[str] = None,
     source: Optional[str] = None,
@@ -88,6 +91,9 @@ def list_questions(
         query = query.filter(Question.status == status)
     if source:
         query = query.filter(Question.source == source)
+    if strand:
+        # Filter by topic's strand
+        query = query.join(Topic).filter(Topic.strand == strand)
     if search:
         query = query.filter(Question.question_text.ilike(f"%{search}%"))
 
