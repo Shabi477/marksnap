@@ -1,5 +1,4 @@
 import qrcode
-from pyzbar.pyzbar import decode as qr_decode
 from PIL import Image
 import json
 import io
@@ -20,6 +19,7 @@ def generate_qr_code(data: dict, box_size: int = 4, border: int = 2) -> Image.Im
 
 def read_qr_code(image: Image.Image) -> dict | None:
     """Read QR code from an image and return the decoded data."""
+    from pyzbar.pyzbar import decode as qr_decode
     decoded = qr_decode(image)
     if not decoded:
         return None
