@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["python313", "zbar", "poppler_utils"]
+nixPkgs = ["python313", "zbar", "poppler_utils", "postgresql"]
 
 [phases.build]
 cmds = ["echo 'Build complete'"]
