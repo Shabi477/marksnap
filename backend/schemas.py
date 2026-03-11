@@ -198,6 +198,114 @@ class ScanResultAssignStudent(BaseModel):
 class LiveScanResponse(BaseModel):
     student_name: Optional[str] = None
     student_code: Optional[str] = None
+
+
+# --- Topics ---
+class TopicCreate(BaseModel):
+    name: str
+    order_index: int = 0
+
+class TopicResponse(BaseModel):
+    id: int
+    name: str
+    subject_id: int
+    order_index: int = 0
+    question_count: int = 0
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# --- Questions ---
+class QuestionCreate(BaseModel):
+    topic_id: int
+    subject_id: int
+    question_text: str
+    option_a: str
+    option_b: str
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    option_e: Optional[str] = None
+    num_options: int = 4
+    correct_answer: str  # 'A'-'E'
+    difficulty: str = "medium"  # easy/medium/hard
+    source: str = "system"  # system/school/teacher
+    school_id: Optional[int] = None
+    image_url: Optional[str] = None
+    explanation: Optional[str] = None
+    year_group: Optional[str] = None
+    key_stage: Optional[str] = None
+    status: str = "approved"
+
+class QuestionUpdate(BaseModel):
+    question_text: Optional[str] = None
+    option_a: Optional[str] = None
+    option_b: Optional[str] = None
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    option_e: Optional[str] = None
+    num_options: Optional[int] = None
+    correct_answer: Optional[str] = None
+    difficulty: Optional[str] = None
+    topic_id: Optional[int] = None
+    explanation: Optional[str] = None
+    year_group: Optional[str] = None
+    key_stage: Optional[str] = None
+    status: Optional[str] = None
+
+class QuestionResponse(BaseModel):
+    id: int
+    topic_id: int
+    subject_id: int
+    question_text: str
+    option_a: str
+    option_b: str
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    option_e: Optional[str] = None
+    num_options: int = 4
+    correct_answer: str
+    difficulty: str = "medium"
+    source: str = "system"
+    school_id: Optional[int] = None
+    created_by: Optional[int] = None
+    creator_name: Optional[str] = None
+    image_url: Optional[str] = None
+    explanation: Optional[str] = None
+    year_group: Optional[str] = None
+    key_stage: Optional[str] = None
+    topic_name: Optional[str] = None
+    subject_name: Optional[str] = None
+    is_active: bool = True
+    status: str = "approved"
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+
+# --- Test Generation from Bank ---
+class TestGenerateSection(BaseModel):
+    section_name: str
+    question_ids: list[int]
+
+class TestGenerate(BaseModel):
+    name: str
+    subject_id: int
+    test_date: Optional[str] = None
+    sections: list[TestGenerateSection]
+
+class AutoGenerateSection(BaseModel):
+    section_name: str
+    topic_ids: list[int]
+    count: int
+    difficulty_mix: Optional[dict] = None  # {"easy": 5, "medium": 10, "hard": 5}
+
+class TestAutoGenerate(BaseModel):
+    name: str
+    subject_id: int
+    test_date: Optional[str] = None
+    sections: list[AutoGenerateSection]
     score: int
     total: int
     percentage: float

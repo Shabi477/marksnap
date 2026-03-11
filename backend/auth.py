@@ -53,3 +53,15 @@ def get_current_teacher(
     if teacher is None:
         raise credentials_exception
     return teacher
+
+
+def require_super_admin(teacher: Teacher = Depends(get_current_teacher)) -> Teacher:
+    if teacher.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Super admin access required")
+    return teacher
+
+
+def require_school_manager(teacher: Teacher = Depends(get_current_teacher)) -> Teacher:
+    if teacher.role not in ("school_admin", "hod", "super_admin"):
+        raise HTTPException(status_code=403, detail="School admin or HOD access required")
+    return teacher

@@ -1,0 +1,455 @@
+{
+  "subject": "Maths",
+  "topics": [
+    {
+      "name": "Number & Place Value",
+      "order_index": 1,
+      "questions": [
+        {
+          "question_text": "What is the value of the digit 7 in 3,745?",
+          "option_a": "7",
+          "option_b": "70",
+          "option_c": "700",
+          "option_d": "7000",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "The 7 is in the hundreds column, so its value is 700."
+        },
+        {
+          "question_text": "Which of these numbers is a prime number?",
+          "option_a": "15",
+          "option_b": "21",
+          "option_c": "23",
+          "option_d": "27",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "23 is only divisible by 1 and itself."
+        },
+        {
+          "question_text": "What is the highest common factor (HCF) of 12 and 18?",
+          "option_a": "2",
+          "option_b": "3",
+          "option_c": "6",
+          "option_d": "9",
+          "correct_answer": "C",
+          "difficulty": "medium",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Factors of 12: 1,2,3,4,6,12. Factors of 18: 1,2,3,6,9,18. HCF = 6."
+        },
+        {
+          "question_text": "What is the lowest common multiple (LCM) of 4 and 6?",
+          "option_a": "2",
+          "option_b": "12",
+          "option_c": "24",
+          "option_d": "10",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Multiples of 4: 4,8,12,16... Multiples of 6: 6,12,18... LCM = 12."
+        },
+        {
+          "question_text": "Write 360 as a product of its prime factors.",
+          "option_a": "2³ × 3² × 5",
+          "option_b": "2² × 3² × 5",
+          "option_c": "2³ × 3 × 5²",
+          "option_d": "2² × 3 × 5²",
+          "correct_answer": "A",
+          "difficulty": "hard",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "360 = 2 × 180 = 2 × 2 × 90 = 2 × 2 × 2 × 45 = 2³ × 9 × 5 = 2³ × 3² × 5."
+        }
+      ]
+    },
+    {
+      "name": "Algebra",
+      "order_index": 2,
+      "questions": [
+        {
+          "question_text": "What is the value of 3x + 5 when x = 4?",
+          "option_a": "12",
+          "option_b": "17",
+          "option_c": "20",
+          "option_d": "32",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "3(4) + 5 = 12 + 5 = 17"
+        },
+        {
+          "question_text": "Simplify: 4a + 3b - 2a + b",
+          "option_a": "2a + 4b",
+          "option_b": "6a + 4b",
+          "option_c": "2a + 2b",
+          "option_d": "6a + 2b",
+          "correct_answer": "A",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "4a - 2a = 2a and 3b + b = 4b, so 2a + 4b."
+        },
+        {
+          "question_text": "Solve: 2x + 7 = 15",
+          "option_a": "x = 3",
+          "option_b": "x = 4",
+          "option_c": "x = 8",
+          "option_d": "x = 11",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "2x = 15 - 7 = 8, so x = 4."
+        },
+        {
+          "question_text": "Expand: 3(2x - 5)",
+          "option_a": "6x - 5",
+          "option_b": "5x - 15",
+          "option_c": "6x - 15",
+          "option_d": "6x + 15",
+          "correct_answer": "C",
+          "difficulty": "medium",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "3 × 2x = 6x and 3 × (-5) = -15, so 6x - 15."
+        },
+        {
+          "question_text": "Factorise: 6x + 9",
+          "option_a": "3(2x + 3)",
+          "option_b": "2(3x + 9)",
+          "option_c": "6(x + 3)",
+          "option_d": "3(2x + 9)",
+          "correct_answer": "A",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "HCF of 6 and 9 is 3. 6x ÷ 3 = 2x, 9 ÷ 3 = 3. So 3(2x + 3)."
+        },
+        {
+          "question_text": "Solve: 3(x + 2) = 21",
+          "option_a": "x = 3",
+          "option_b": "x = 5",
+          "option_c": "x = 7",
+          "option_d": "x = 9",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "3x + 6 = 21, 3x = 15, x = 5."
+        },
+        {
+          "question_text": "What is the nth term of the sequence 5, 8, 11, 14, ...?",
+          "option_a": "3n + 5",
+          "option_b": "3n + 2",
+          "option_c": "5n + 3",
+          "option_d": "n + 3",
+          "correct_answer": "B",
+          "difficulty": "hard",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "Common difference = 3. nth term = 3n + c. When n=1: 3(1)+c=5, c=2. So 3n+2."
+        },
+        {
+          "question_text": "Solve the simultaneous equations: x + y = 7 and 2x + y = 10",
+          "option_a": "x = 2, y = 5",
+          "option_b": "x = 3, y = 4",
+          "option_c": "x = 4, y = 3",
+          "option_d": "x = 5, y = 2",
+          "correct_answer": "B",
+          "difficulty": "hard",
+          "year_group": "Year 9",
+          "key_stage": "KS3",
+          "explanation": "Subtract equation 1 from 2: (2x+y)-(x+y) = 10-7, x = 3. Then y = 7-3 = 4."
+        }
+      ]
+    },
+    {
+      "name": "Fractions, Decimals & Percentages",
+      "order_index": 3,
+      "questions": [
+        {
+          "question_text": "What is 3/4 + 1/2?",
+          "option_a": "4/6",
+          "option_b": "1",
+          "option_c": "5/4",
+          "option_d": "7/8",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "3/4 + 1/2 = 3/4 + 2/4 = 5/4."
+        },
+        {
+          "question_text": "What is 0.35 as a fraction in its simplest form?",
+          "option_a": "35/100",
+          "option_b": "7/20",
+          "option_c": "7/10",
+          "option_d": "35/10",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "0.35 = 35/100 = 7/20 (dividing by 5)."
+        },
+        {
+          "question_text": "What is 15% of 80?",
+          "option_a": "8",
+          "option_b": "10",
+          "option_c": "12",
+          "option_d": "15",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "10% of 80 = 8. 5% of 80 = 4. 15% = 8 + 4 = 12."
+        },
+        {
+          "question_text": "What is 2/3 × 3/5?",
+          "option_a": "6/15",
+          "option_b": "2/5",
+          "option_c": "5/8",
+          "option_d": "1/5",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "2/3 × 3/5 = 6/15 = 2/5."
+        },
+        {
+          "question_text": "A shirt costs £40. It is reduced by 20%. What is the sale price?",
+          "option_a": "£20",
+          "option_b": "£28",
+          "option_c": "£32",
+          "option_d": "£36",
+          "correct_answer": "C",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "20% of £40 = £8. Sale price = £40 - £8 = £32."
+        }
+      ]
+    },
+    {
+      "name": "Ratio & Proportion",
+      "order_index": 4,
+      "questions": [
+        {
+          "question_text": "Simplify the ratio 12:18",
+          "option_a": "4:6",
+          "option_b": "6:9",
+          "option_c": "2:3",
+          "option_d": "3:2",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Divide both by HCF (6): 12÷6 = 2, 18÷6 = 3. Ratio = 2:3."
+        },
+        {
+          "question_text": "Share £60 in the ratio 2:3. What is the larger share?",
+          "option_a": "£24",
+          "option_b": "£30",
+          "option_c": "£36",
+          "option_d": "£40",
+          "correct_answer": "C",
+          "difficulty": "medium",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Total parts = 5. One part = £12. Larger share = 3 × £12 = £36."
+        },
+        {
+          "question_text": "If 5 pens cost £3.50, how much do 8 pens cost?",
+          "option_a": "£4.80",
+          "option_b": "£5.20",
+          "option_c": "£5.60",
+          "option_d": "£6.00",
+          "correct_answer": "C",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "1 pen = £3.50 ÷ 5 = £0.70. 8 pens = 8 × £0.70 = £5.60."
+        },
+        {
+          "question_text": "A recipe for 4 people uses 300g flour. How much flour is needed for 6 people?",
+          "option_a": "400g",
+          "option_b": "450g",
+          "option_c": "500g",
+          "option_d": "600g",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "For 1 person: 300÷4 = 75g. For 6 people: 75 × 6 = 450g."
+        }
+      ]
+    },
+    {
+      "name": "Geometry — Angles",
+      "order_index": 5,
+      "questions": [
+        {
+          "question_text": "What do angles in a triangle add up to?",
+          "option_a": "90°",
+          "option_b": "180°",
+          "option_c": "270°",
+          "option_d": "360°",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "The interior angles of any triangle always sum to 180°."
+        },
+        {
+          "question_text": "Two angles on a straight line are x° and 130°. What is x?",
+          "option_a": "30",
+          "option_b": "40",
+          "option_c": "50",
+          "option_d": "60",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Angles on a straight line = 180°. x = 180 - 130 = 50°."
+        },
+        {
+          "question_text": "What is the sum of interior angles of a pentagon?",
+          "option_a": "360°",
+          "option_b": "540°",
+          "option_c": "720°",
+          "option_d": "900°",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "Sum = (n-2) × 180° = (5-2) × 180° = 540°."
+        },
+        {
+          "question_text": "An exterior angle of a regular polygon is 40°. How many sides does it have?",
+          "option_a": "6",
+          "option_b": "8",
+          "option_c": "9",
+          "option_d": "10",
+          "correct_answer": "C",
+          "difficulty": "hard",
+          "year_group": "Year 9",
+          "key_stage": "KS3",
+          "explanation": "Exterior angles sum to 360°. Number of sides = 360 ÷ 40 = 9."
+        }
+      ]
+    },
+    {
+      "name": "Geometry — Area & Perimeter",
+      "order_index": 6,
+      "questions": [
+        {
+          "question_text": "What is the area of a rectangle with length 8cm and width 5cm?",
+          "option_a": "13 cm²",
+          "option_b": "26 cm²",
+          "option_c": "40 cm²",
+          "option_d": "80 cm²",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Area = length × width = 8 × 5 = 40 cm²."
+        },
+        {
+          "question_text": "What is the area of a triangle with base 10cm and height 6cm?",
+          "option_a": "16 cm²",
+          "option_b": "30 cm²",
+          "option_c": "60 cm²",
+          "option_d": "120 cm²",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Area = ½ × base × height = ½ × 10 × 6 = 30 cm²."
+        },
+        {
+          "question_text": "What is the circumference of a circle with radius 7cm? (Use π = 22/7)",
+          "option_a": "22 cm",
+          "option_b": "44 cm",
+          "option_c": "154 cm",
+          "option_d": "88 cm",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "C = 2πr = 2 × 22/7 × 7 = 44 cm."
+        },
+        {
+          "question_text": "What is the area of a trapezium with parallel sides 6cm and 10cm, and height 4cm?",
+          "option_a": "24 cm²",
+          "option_b": "32 cm²",
+          "option_c": "40 cm²",
+          "option_d": "64 cm²",
+          "correct_answer": "B",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "Area = ½(a+b)h = ½(6+10)×4 = ½×16×4 = 32 cm²."
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Probability",
+      "order_index": 7,
+      "questions": [
+        {
+          "question_text": "What is the mean of 3, 5, 7, 9, 11?",
+          "option_a": "5",
+          "option_b": "7",
+          "option_c": "8",
+          "option_d": "9",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Mean = (3+5+7+9+11) ÷ 5 = 35 ÷ 5 = 7."
+        },
+        {
+          "question_text": "What is the median of 2, 8, 4, 6, 10?",
+          "option_a": "4",
+          "option_b": "6",
+          "option_c": "7",
+          "option_d": "8",
+          "correct_answer": "B",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Ordered: 2,4,6,8,10. Middle value = 6."
+        },
+        {
+          "question_text": "A bag has 3 red, 5 blue, and 2 green balls. What is the probability of picking a blue ball?",
+          "option_a": "1/2",
+          "option_b": "3/10",
+          "option_c": "1/5",
+          "option_d": "2/5",
+          "correct_answer": "A",
+          "difficulty": "medium",
+          "year_group": "Year 8",
+          "key_stage": "KS3",
+          "explanation": "Total = 10. P(blue) = 5/10 = 1/2."
+        },
+        {
+          "question_text": "The range of a data set is 15. The smallest value is 8. What is the largest value?",
+          "option_a": "7",
+          "option_b": "15",
+          "option_c": "23",
+          "option_d": "120",
+          "correct_answer": "C",
+          "difficulty": "easy",
+          "year_group": "Year 7",
+          "key_stage": "KS3",
+          "explanation": "Range = largest - smallest. 15 = largest - 8. Largest = 23."
+        }
+      ]
+    }
+  ]
+}

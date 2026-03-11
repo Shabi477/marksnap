@@ -7,7 +7,7 @@ load_dotenv()
 
 from database import init_db, SessionLocal
 from models import Subject
-from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router, subjects_router
+from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router, subjects_router, topics_router, questions_router
 import os
 
 DEFAULT_SUBJECTS = ["Maths", "English", "Science"]
@@ -52,6 +52,8 @@ app.include_router(scan_router.router)
 app.include_router(results_router.router)
 app.include_router(school_router.router)
 app.include_router(subjects_router.router)
+app.include_router(topics_router.router)
+app.include_router(questions_router.router)
 
 # Serve uploads directory
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")

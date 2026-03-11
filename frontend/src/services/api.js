@@ -134,4 +134,28 @@ export const subjectsAPI = {
   removeTeacher: (subjectId, teacherId) => api.delete(`/subjects/${subjectId}/teachers/${teacherId}`),
 };
 
+// --- Topics ---
+export const topicsAPI = {
+  list: (subjectId) => api.get(`/subjects/${subjectId}/topics`),
+  create: (subjectId, data) => api.post(`/subjects/${subjectId}/topics`, data),
+  update: (subjectId, topicId, data) => api.put(`/subjects/${subjectId}/topics/${topicId}`, data),
+  delete: (subjectId, topicId) => api.delete(`/subjects/${subjectId}/topics/${topicId}`),
+};
+
+// --- Questions ---
+export const questionsAPI = {
+  list: (params = {}) => api.get('/questions', { params }),
+  get: (id) => api.get(`/questions/${id}`),
+  create: (data) => api.post('/questions', data),
+  update: (id, data) => api.put(`/questions/${id}`, data),
+  delete: (id) => api.delete(`/questions/${id}`),
+  bulkCreate: (questions) => api.post('/questions/bulk', questions),
+};
+
+// --- Test Generation from Bank ---
+export const testGenerateAPI = {
+  generate: (data) => api.post('/tests/generate', data),
+  autoGenerate: (data) => api.post('/tests/auto-generate', data),
+};
+
 export default api;

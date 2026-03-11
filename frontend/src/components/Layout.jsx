@@ -8,6 +8,8 @@ import {
   Menu,
   Zap,
   Building2,
+  BookOpen,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,8 +22,12 @@ export default function Layout() {
     { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
     { to: '/classes', icon: Users, label: 'Classes' },
     { to: '/tests', icon: FileText, label: 'Tests' },
-    ...(teacher?.role === 'hod'
+    { to: '/questions', icon: BookOpen, label: 'Question Bank' },
+    ...(teacher?.role === 'hod' || teacher?.role === 'school_admin'
       ? [{ to: '/school', icon: Building2, label: 'School' }]
+      : []),
+    ...(teacher?.role === 'super_admin'
+      ? [{ to: '/admin', icon: Shield, label: 'Admin' }]
       : []),
   ];
 

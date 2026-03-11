@@ -12,6 +12,8 @@ import ScanUpload from './pages/ScanUpload';
 import LiveScanner from './pages/LiveScanner';
 import Results from './pages/Results';
 import SchoolManagement from './pages/SchoolManagement';
+import QuestionBank from './pages/QuestionBank';
+import AdminPanel from './pages/AdminPanel';
 
 function ProtectedRoute({ children }) {
   const { teacher, loading } = useAuth();
@@ -52,6 +54,8 @@ function AppRoutes() {
         <Route path="live-scan/:testId" element={<LiveScanner />} />
         <Route path="results/:testId" element={<Results />} />
         <Route path="school" element={<SchoolManagement />} />
+        <Route path="questions" element={<QuestionBank />} />
+        <Route path="admin" element={<AdminPanel />} />
       </Route>
     </Routes>
   );

@@ -58,6 +58,8 @@ class Subject(Base):
     school = relationship("School", back_populates="subjects")
     teachers = relationship("Teacher", secondary=teacher_subjects, back_populates="subjects")
     tests = relationship("Test", back_populates="subject")
+    topics = relationship("Topic", back_populates="subject")
+    questions = relationship("Question", back_populates="subject")
 
 
 class Teacher(Base):
@@ -67,7 +69,7 @@ class Teacher(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="standalone")  # 'school_admin', 'hod', 'teacher', 'standalone'
+    role = Column(String, nullable=False, default="standalone")  # 'super_admin', 'school_admin', 'hod', 'teacher', 'standalone'
     school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
     tier = Column(String, nullable=False, default="free")  # For standalone teachers: 'free', 'standard', 'premium'
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -109,6 +111,53 @@ class Student(Base):
     results = relationship("ScanResult", back_populates="student")
 
 
+class Topic(Base):
+    __tablename__ = "topics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    subject = relationship("Subject", back_populates="topics")
+    questions = relationship("Question", back_populates="topic")
+
+
+class Question(Base):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)  # denormalised
+    question_text = Column(Text, nullable=False)
+    option_a = Column(String, nullable=False)
+    option_b = Column(String, nullable=False)
+    option_c = Column(String, nullable=True)
+    option_d = Column(String, nullable=True)
+    option_e = Column(String, nullable=True)
+    num_options = Column(Integer, nullable=False, default=4)
+    correct_answer = Column(String, nullable=False)  # 'A'-'E'
+    difficulty = Column(String, nullable=False, default="medium")  # easy/medium/hard
+    source = Column(String, nullable=False, default="system")  # system/school/teacher
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)  # NULL = system-wide
+    created_by = Column(Integer, ForeignKey("teachers.id"), nullable=True)
+    image_url = Column(String, nullable=True)
+    explanation = Column(Text, nullable=True)
+    year_group = Column(String, nullable=True)  # e.g. "Year 7", "Year 8"
+    key_stage = Column(String, nullable=True)  # KS1-KS5
+    is_active = Column(Boolean, default=True)
+    status = Column(String, nullable=False, default="approved")  # draft/pending_review/approved/rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    topic = relationship("Topic", back_populates="questions")
+    subject = relationship("Subject", back_populates="questions")
+    school = relationship("School")
+    creator = relationship("Teacher")
+    test_questions = relationship("TestQuestion", back_populates="question")
+
+
 class Test(Base):
     __tablename__ = "tests"
 
@@ -118,6 +167,7 @@ class Test(Base):
     subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=True)
     test_date = Column(DateTime, nullable=True)  # When the test is/was taken
     test_file_path = Column(String, nullable=True)  # Uploaded reference paper
+    is_bank_test = Column(Boolean, default=False)  # True if built from question bank
     created_at = Column(DateTime, default=datetime.utcnow)
 
     teacher = relationship("Teacher", back_populates="tests")
@@ -126,6 +176,7 @@ class Test(Base):
     answer_keys = relationship("AnswerKey", back_populates="test")
     scan_batches = relationship("ScanBatch", back_populates="test")
     assignments = relationship("TestAssignment", back_populates="test")
+    test_questions = relationship("TestQuestion", back_populates="test", order_by="TestQuestion.question_number")
 
 
 class TestSection(Base):
@@ -208,3 +259,16 @@ class ScanResult(Base):
 
     scan_batch = relationship("ScanBatch", back_populates="results")
     student = relationship("Student", back_populates="results")
+
+
+class TestQuestion(Base):
+    __tablename__ = "test_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    section_name = Column(String, nullable=False, default="A")
+    question_number = Column(Integer, nullable=False)  # position in test
+
+    test = relationship("Test", back_populates="test_questions")
+    question = relationship("Question", back_populates="test_questions")

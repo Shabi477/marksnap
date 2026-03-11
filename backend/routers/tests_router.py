@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, teacher_classes
-from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry
+from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, Question, TestQuestion, teacher_classes
+from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry, TestGenerate, TestAutoGenerate
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
 from services.sheet_generator import generate_answer_sheets
@@ -322,3 +323,165 @@ def download_test_paper(
         raise HTTPException(status_code=404, detail="File not found on server")
 
     return FileResponse(file_path, filename=os.path.basename(file_path))
+
+
+@router.post("/generate", response_model=TestResponse)
+def generate_test_from_bank(
+    data: TestGenerate,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Generate a test by picking specific questions from the bank."""
+    subject = db.query(Subject).filter(Subject.id == data.subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Collect all question IDs from all sections
+    all_q_ids = []
+    for sec in data.sections:
+        all_q_ids.extend(sec.question_ids)
+
+    # Validate all questions exist and are active
+    questions = db.query(Question).filter(
+        Question.id.in_(all_q_ids), Question.is_active == True
+    ).all()
+    q_map = {q.id: q for q in questions}
+
+    missing = set(all_q_ids) - set(q_map.keys())
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Questions not found: {missing}")
+
+    # Create test
+    test = Test(name=data.name, teacher_id=teacher.id, subject_id=data.subject_id, is_bank_test=True)
+    if data.test_date:
+        from datetime import datetime as dt
+        try:
+            test.test_date = dt.fromisoformat(data.test_date)
+        except ValueError:
+            pass
+
+    db.add(test)
+    db.flush()
+
+    # Create sections, test_questions, and answer_keys
+    q_number = 1
+    for i, sec in enumerate(data.sections):
+        # Determine num_options from questions (use max across section)
+        sec_questions = [q_map[qid] for qid in sec.question_ids]
+        max_options = max(q.num_options for q in sec_questions) if sec_questions else 4
+
+        section = TestSection(
+            test_id=test.id,
+            section_name=sec.section_name,
+            num_questions=len(sec.question_ids),
+            num_options=max_options,
+            start_question=q_number,
+            order_index=i,
+            page_number=i + 1,
+        )
+        db.add(section)
+
+        for qid in sec.question_ids:
+            q = q_map[qid]
+            # TestQuestion link
+            tq = TestQuestion(
+                test_id=test.id,
+                question_id=qid,
+                section_name=sec.section_name,
+                question_number=q_number,
+            )
+            db.add(tq)
+
+            # Auto-populate answer key
+            ak = AnswerKey(
+                test_id=test.id,
+                question_number=q_number,
+                section_name=sec.section_name,
+                correct_answer=q.correct_answer,
+            )
+            db.add(ak)
+            q_number += 1
+
+    db.commit()
+    db.refresh(test)
+    return _build_test_response(test)
+
+
+@router.post("/auto-generate", response_model=TestResponse)
+def auto_generate_test(
+    data: TestAutoGenerate,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Auto-generate a test by randomly selecting questions by criteria."""
+    subject = db.query(Subject).filter(Subject.id == data.subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Build sections with randomly selected question IDs
+    generated_sections = []
+    used_ids = set()
+
+    for sec in data.sections:
+        selected_ids = []
+
+        if sec.difficulty_mix:
+            # Pick questions per difficulty level
+            for difficulty, count in sec.difficulty_mix.items():
+                pool = (
+                    db.query(Question)
+                    .filter(
+                        Question.subject_id == data.subject_id,
+                        Question.topic_id.in_(sec.topic_ids),
+                        Question.difficulty == difficulty,
+                        Question.is_active == True,
+                        Question.status == "approved",
+                        ~Question.id.in_(used_ids) if used_ids else True,
+                    )
+                    .order_by(func.random())
+                    .limit(count)
+                    .all()
+                )
+                selected_ids.extend(q.id for q in pool)
+                used_ids.update(q.id for q in pool)
+        else:
+            # Pick randomly from all matching questions
+            pool = (
+                db.query(Question)
+                .filter(
+                    Question.subject_id == data.subject_id,
+                    Question.topic_id.in_(sec.topic_ids),
+                    Question.is_active == True,
+                    Question.status == "approved",
+                    ~Question.id.in_(used_ids) if used_ids else True,
+                )
+                .order_by(func.random())
+                .limit(sec.count)
+                .all()
+            )
+            selected_ids = [q.id for q in pool]
+            used_ids.update(selected_ids)
+
+        if len(selected_ids) < sec.count:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough questions for section {sec.section_name}. "
+                       f"Requested {sec.count}, found {len(selected_ids)}."
+            )
+
+        generated_sections.append({
+            "section_name": sec.section_name,
+            "question_ids": selected_ids,
+        })
+
+    # Now create the test using the same logic as generate
+    gen_data = TestGenerate(
+        name=data.name,
+        subject_id=data.subject_id,
+        test_date=data.test_date,
+        sections=[
+            {"section_name": s["section_name"], "question_ids": s["question_ids"]}
+            for s in generated_sections
+        ],
+    )
+    return generate_test_from_bank(gen_data, db, teacher)
