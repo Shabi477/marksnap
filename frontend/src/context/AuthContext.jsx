@@ -31,8 +31,14 @@ export function AuthProvider({ children }) {
     await login(email, password);
   };
 
-  const registerSchool = async (schoolName, name, email, password) => {
-    await authAPI.registerSchool({ school_name: schoolName, name, email, password });
+  const registerSchool = async (schoolName, name, email, password, schoolType) => {
+    await authAPI.registerSchool({
+      school_name: schoolName,
+      name,
+      email,
+      password,
+      school_type: schoolType || undefined,
+    });
     await login(email, password);
   };
 

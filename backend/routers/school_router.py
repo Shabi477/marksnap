@@ -24,6 +24,7 @@ def _class_response(c: ClassGroup, db: Session) -> ClassResponse:
     teacher_names = [t.name for t in c.teachers]
     return ClassResponse(
         id=c.id, name=c.name, academic_year=c.academic_year,
+        key_stage=c.key_stage,
         school_id=c.school_id, owner_id=c.owner_id,
         student_count=len(c.students), teacher_names=teacher_names,
         created_at=c.created_at,
@@ -73,8 +74,11 @@ def list_teachers(
     for t in teachers:
         result.append({
             "id": t.id, "email": t.email, "name": t.name,
-            "role": t.role, "school_id": t.school_id,
+            "role": t.role, "tier": t.tier, "school_id": t.school_id,
             "school_name": t.school.name if t.school else None,
+            "school_type": t.school.school_type if t.school else None,
+            "region": t.school.region if t.school else None,
+            "school_tier": t.school.tier if t.school else None,
             "created_at": t.created_at,
         })
     return result
@@ -100,6 +104,7 @@ def create_school_class(
     require_hod(teacher)
     class_group = ClassGroup(
         name=data.name, academic_year=data.academic_year,
+        key_stage=data.key_stage,
         school_id=teacher.school_id, owner_id=teacher.id,
     )
     db.add(class_group)

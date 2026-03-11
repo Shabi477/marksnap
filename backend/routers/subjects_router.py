@@ -28,6 +28,7 @@ def _build_subject_response(subject: Subject, db: Session) -> SubjectResponse:
         id=subject.id,
         name=subject.name,
         school_id=subject.school_id,
+        is_default=subject.is_default,
         teacher_count=teacher_count,
         hod_names=hod_names,
         created_at=subject.created_at,
@@ -39,9 +40,12 @@ def list_subjects(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    if not teacher.school_id:
-        return []
-    subjects = db.query(Subject).filter(Subject.school_id == teacher.school_id).order_by(Subject.name).all()
+    from sqlalchemy import or_
+    # Show default (platform) subjects + school-specific subjects
+    filters = [Subject.is_default == True]
+    if teacher.school_id:
+        filters.append(Subject.school_id == teacher.school_id)
+    subjects = db.query(Subject).filter(or_(*filters)).order_by(Subject.name).all()
     return [_build_subject_response(s, db) for s in subjects]
 
 

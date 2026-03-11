@@ -19,6 +19,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [schoolName, setSchoolName] = useState('');
+  const [schoolType, setSchoolType] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +34,7 @@ export default function Login() {
     setPassword('');
     setInviteCode('');
     setSchoolName('');
+    setSchoolType('');
   };
 
   const handleSubmit = async (e) => {
@@ -43,7 +45,7 @@ export default function Login() {
         await login(email, password);
         toast.success('Welcome back!');
       } else if (mode === MODES.REGISTER_SCHOOL) {
-        await registerSchool(schoolName, name, email, password);
+        await registerSchool(schoolName, name, email, password, schoolType);
         toast.success('School registered! Welcome to MarkSnap.');
       } else {
         await register(name, email, password, inviteCode);
@@ -91,6 +93,21 @@ export default function Login() {
                   placeholder="Springfield Academy"
                   required
                 />
+              </div>
+            )}
+
+            {mode === MODES.REGISTER_SCHOOL && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">School Type</label>
+                <select
+                  value={schoolType}
+                  onChange={(e) => setSchoolType(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="">Select type...</option>
+                  <option value="primary">Primary (KS1–KS2)</option>
+                  <option value="secondary">Secondary (KS3–KS5)</option>
+                </select>
               </div>
             )}
 

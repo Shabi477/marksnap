@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { scanAPI, classesAPI, testsAPI } from '../services/api';
-import { ArrowLeft, Upload, ScanLine, CheckCircle2, AlertCircle, Image, FileText, Camera, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Upload, ScanLine, CheckCircle2, AlertCircle, Image, FileText, Camera, AlertTriangle, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ScanUpload() {
@@ -17,6 +17,8 @@ export default function ScanUpload() {
   const [reviewBatchId, setReviewBatchId] = useState(null);
   const [flaggedResults, setFlaggedResults] = useState([]);
   const [loadingFlagged, setLoadingFlagged] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [assigningResultId, setAssigningResultId] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -27,6 +29,13 @@ export default function ScanUpload() {
       setTest(testRes.data);
       setClasses(classRes.data);
       setBatches(batchRes.data);
+      // Load all students across classes for assign-student
+      Promise.all(classRes.data.map((cls) => classesAPI.getStudents(cls.id)))
+        .then((results) => {
+          const allStudents = results.flatMap((r) => r.data);
+          setStudents(allStudents);
+        })
+        .catch(() => {});
     });
   }, [testId]);
 
@@ -127,7 +136,6 @@ export default function ScanUpload() {
     try {
       await scanAPI.correctResult(resultId, answer);
       setFlaggedResults((prev) => prev.filter((r) => r.id !== resultId));
-      // Update batch flagged count
       setBatches((prev) =>
         prev.map((b) =>
           b.id === reviewBatchId
@@ -138,6 +146,33 @@ export default function ScanUpload() {
       toast.success('Answer corrected');
     } catch {
       toast.error('Failed to save correction');
+    }
+  };
+
+  const handleAssignStudent = async (resultId, studentId) => {
+    try {
+      await scanAPI.assignStudent(resultId, studentId);
+      // Remove all flagged results for same page that were unidentified
+      const result = flaggedResults.find((r) => r.id === resultId);
+      if (result) {
+        setFlaggedResults((prev) =>
+          prev.filter((r) => !(r.page_number === result.page_number && !r.student_id))
+        );
+        const removedCount = flaggedResults.filter(
+          (r) => r.page_number === result.page_number && !r.student_id
+        ).length;
+        setBatches((prev) =>
+          prev.map((b) =>
+            b.id === reviewBatchId
+              ? { ...b, flagged_count: Math.max(0, (b.flagged_count || 0) - removedCount) }
+              : b
+          )
+        );
+      }
+      setAssigningResultId(null);
+      toast.success('Student assigned');
+    } catch {
+      toast.error('Failed to assign student');
     }
   };
 
@@ -364,7 +399,9 @@ export default function ScanUpload() {
                                 <span className="text-gray-400 ml-1">({result.section_name})</span>
                               </p>
                               <p className="text-xs text-gray-500">
-                                {result.student_name || result.student_code || 'Unknown student'}
+                                {result.student_name || result.student_code || (
+                                  <span className="text-red-500 font-medium">Unidentified student</span>
+                                )}
                                 <span className="mx-1">•</span>
                                 Confidence: {Math.round(result.confidence * 100)}%
                                 {result.selected_answer && (
@@ -372,8 +409,35 @@ export default function ScanUpload() {
                                 )}
                               </p>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-gray-500 mr-1">Correct answer:</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Assign student button for unidentified scans */}
+                              {!result.student_id && (
+                                assigningResultId === result.id ? (
+                                  <select
+                                    autoFocus
+                                    className="input-field text-xs py-1 px-2 w-40"
+                                    onChange={(e) => {
+                                      if (e.target.value) handleAssignStudent(result.id, parseInt(e.target.value));
+                                    }}
+                                    onBlur={() => setAssigningResultId(null)}
+                                  >
+                                    <option value="">Select student...</option>
+                                    {students.map((s) => (
+                                      <option key={s.id} value={s.id}>{s.name} ({s.student_code})</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <button
+                                    onClick={() => setAssigningResultId(result.id)}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200"
+                                  >
+                                    <UserPlus className="w-3 h-3" /> Assign
+                                  </button>
+                                )
+                              )}
+                              {/* Answer correction buttons */}
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-gray-500 mr-1">Correct answer:</span>
                               {['A', 'B', 'C', 'D', 'E'].map((letter) => (
                                 <button
                                   key={letter}
@@ -387,6 +451,7 @@ export default function ScanUpload() {
                                   {letter}
                                 </button>
                               ))}
+                              </div>
                             </div>
                           </div>
                         ))}

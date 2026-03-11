@@ -11,6 +11,9 @@ class SchoolResponse(BaseModel):
     id: int
     name: str
     invite_code: str
+    school_type: Optional[str] = None
+    region: str = "UK"
+    tier: str = "free"
     created_at: datetime
     class Config:
         from_attributes = True
@@ -28,6 +31,9 @@ class SchoolRegister(BaseModel):
     email: EmailStr
     name: str
     password: str
+    school_type: Optional[str] = None  # 'primary' or 'secondary'
+    region: str = "UK"
+    tier: str = "free"  # 'free', 'standard', 'premium', 'all_access'
 
 class TeacherLogin(BaseModel):
     email: EmailStr
@@ -38,8 +44,12 @@ class TeacherResponse(BaseModel):
     email: str
     name: str
     role: str
+    tier: str = "free"
     school_id: Optional[int] = None
     school_name: Optional[str] = None
+    school_type: Optional[str] = None
+    region: Optional[str] = None
+    school_tier: Optional[str] = None
     created_at: datetime
     class Config:
         from_attributes = True
@@ -56,7 +66,8 @@ class SubjectCreate(BaseModel):
 class SubjectResponse(BaseModel):
     id: int
     name: str
-    school_id: int
+    school_id: Optional[int] = None
+    is_default: bool = False
     teacher_count: int = 0
     hod_names: list[str] = []
     created_at: datetime
@@ -72,11 +83,13 @@ class SubjectTeacherAssign(BaseModel):
 class ClassCreate(BaseModel):
     name: str
     academic_year: str
+    key_stage: Optional[str] = None  # 'KS1', 'KS2', 'KS3', 'KS4', 'KS5'
 
 class ClassResponse(BaseModel):
     id: int
     name: str
     academic_year: str
+    key_stage: Optional[str] = None
     school_id: Optional[int] = None
     owner_id: Optional[int] = None
     student_count: int = 0
@@ -178,6 +191,9 @@ class ScanResultResponse(BaseModel):
 
 class ScanResultCorrection(BaseModel):
     selected_answer: str
+
+class ScanResultAssignStudent(BaseModel):
+    student_id: int
 
 class LiveScanResponse(BaseModel):
     student_name: Optional[str] = None

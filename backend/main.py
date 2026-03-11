@@ -5,14 +5,29 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
-from database import init_db
+from database import init_db, SessionLocal
+from models import Subject
 from routers import auth_router, classes_router, tests_router, scan_router, results_router, school_router, subjects_router
 import os
+
+DEFAULT_SUBJECTS = ["Maths", "English", "Science"]
 
 
 @asynccontextmanager
 async def lifespan(app):
     init_db()
+    # Seed default subjects if they don't exist
+    db = SessionLocal()
+    try:
+        for name in DEFAULT_SUBJECTS:
+            exists = db.query(Subject).filter(
+                Subject.name == name, Subject.is_default == True
+            ).first()
+            if not exists:
+                db.add(Subject(name=name, school_id=None, is_default=True))
+        db.commit()
+    finally:
+        db.close()
     yield
 
 

@@ -14,8 +14,12 @@ def _teacher_response(teacher: Teacher) -> dict:
         "email": teacher.email,
         "name": teacher.name,
         "role": teacher.role,
+        "tier": teacher.tier,
         "school_id": teacher.school_id,
         "school_name": teacher.school.name if teacher.school else None,
+        "school_type": teacher.school.school_type if teacher.school else None,
+        "region": teacher.school.region if teacher.school else None,
+        "school_tier": teacher.school.tier if teacher.school else None,
         "created_at": teacher.created_at,
     }
 
@@ -57,7 +61,12 @@ def register_school(data: SchoolRegister, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    school = School(name=data.school_name)
+    school = School(
+        name=data.school_name,
+        school_type=data.school_type,
+        region=data.region,
+        tier=data.tier,
+    )
     db.add(school)
     db.flush()
 

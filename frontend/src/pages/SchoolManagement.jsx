@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { schoolAPI, testsAPI } from '../services/api';
+import { schoolAPI, testsAPI, subjectsAPI } from '../services/api';
 import {
   Building2, Users, Copy, RefreshCw, Plus, Trash2, Upload,
   Search, ArrowRightLeft, UserPlus, BookOpen, Send,
-  ClipboardList, Filter, X,
+  ClipboardList, Filter, X, GraduationCap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -19,6 +19,7 @@ export default function SchoolManagement() {
   // Form state
   const [newClassName, setNewClassName] = useState('');
   const [newClassYear, setNewClassYear] = useState(new Date().getFullYear().toString());
+  const [newClassKeyStage, setNewClassKeyStage] = useState('');
   const [assignTeacherId, setAssignTeacherId] = useState('');
   const [assignClassId, setAssignClassId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,15 +40,23 @@ export default function SchoolManagement() {
   // Year group filter for classes tab
   const [classYearFilter, setClassYearFilter] = useState('');
 
+  // Subjects state
+  const [subjects, setSubjects] = useState([]);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [assignSubjectTeacherId, setAssignSubjectTeacherId] = useState('');
+  const [assignSubjectIsHod, setAssignSubjectIsHod] = useState(false);
+
   const loadData = async () => {
     try {
-      const [schoolRes, teacherRes, classRes, testsRes, yearRes, assignRes] = await Promise.all([
+      const [schoolRes, teacherRes, classRes, testsRes, yearRes, assignRes, subjectsRes] = await Promise.all([
         schoolAPI.getInfo(),
         schoolAPI.getTeachers(),
         schoolAPI.getClasses(),
         testsAPI.list(),
         schoolAPI.getYearGroups().catch(() => ({ data: [] })),
         schoolAPI.getTestAssignments().catch(() => ({ data: [] })),
+        subjectsAPI.list().catch(() => ({ data: [] })),
       ]);
       setSchool(schoolRes.data);
       setTeachers(teacherRes.data);
@@ -55,6 +64,7 @@ export default function SchoolManagement() {
       setTests(testsRes.data);
       setYearGroups(yearRes.data);
       setAssignments(assignRes.data);
+      setSubjects(subjectsRes.data);
     } catch {
       toast.error('Failed to load school data');
     } finally {
@@ -84,9 +94,10 @@ export default function SchoolManagement() {
   const handleCreateClass = async (e) => {
     e.preventDefault();
     try {
-      await schoolAPI.createClass({ name: newClassName, academic_year: newClassYear });
+      await schoolAPI.createClass({ name: newClassName, academic_year: newClassYear, key_stage: newClassKeyStage || undefined });
       toast.success(`Class "${newClassName}" created`);
       setNewClassName('');
+      setNewClassKeyStage('');
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to create class');
@@ -227,6 +238,7 @@ export default function SchoolManagement() {
     { key: 'overview', label: 'Overview', icon: Building2 },
     { key: 'classes', label: 'Classes', icon: BookOpen },
     { key: 'teachers', label: 'Teachers', icon: Users },
+    { key: 'subjects', label: 'Subjects', icon: GraduationCap },
     { key: 'tests', label: 'Tests', icon: ClipboardList },
     { key: 'students', label: 'Students', icon: Search },
   ];
@@ -299,6 +311,25 @@ export default function SchoolManagement() {
 
           {/* Invite Code */}
           <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">School Details</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-gray-500">Type</p>
+                <p className="font-medium text-gray-900 capitalize">{school?.school_type || 'Not set'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Region</p>
+                <p className="font-medium text-gray-900">{school?.region || 'UK'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Plan</p>
+                <p className="font-medium text-gray-900 capitalize">{school?.tier || 'Free'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Invite Code */}
+          <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Invite Code</h3>
             <p className="text-sm text-gray-500 mb-4">
               Share this code with teachers so they can join your school when they register.
@@ -358,6 +389,21 @@ export default function SchoolManagement() {
                 className="input-field"
               />
             </div>
+            <div className="w-32">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Key Stage</label>
+              <select
+                value={newClassKeyStage}
+                onChange={(e) => setNewClassKeyStage(e.target.value)}
+                className="input-field"
+              >
+                <option value="">None</option>
+                <option value="KS1">KS1</option>
+                <option value="KS2">KS2</option>
+                <option value="KS3">KS3</option>
+                <option value="KS4">KS4</option>
+                <option value="KS5">KS5</option>
+              </select>
+            </div>
             <button type="submit" className="btn-primary flex items-center gap-2">
               <Plus className="w-4 h-4" /> Create
             </button>
@@ -404,7 +450,9 @@ export default function SchoolManagement() {
                   <div>
                     <h4 className="font-semibold text-gray-900">{cls.name}</h4>
                     <p className="text-sm text-gray-500">
-                      {cls.academic_year} &bull; {cls.student_count} students
+                      {cls.academic_year}
+                      {cls.key_stage && <span> &bull; {cls.key_stage}</span>}
+                      {' '}&bull; {cls.student_count} students
                       {cls.teacher_names?.length > 0 && (
                         <span> &bull; {cls.teacher_names.join(', ')}</span>
                       )}
@@ -495,6 +543,162 @@ export default function SchoolManagement() {
                       {t.role === 'hod' ? 'HOD' : 'Teacher'}
                     </span>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Subjects Tab */}
+      {tab === 'subjects' && (
+        <div className="space-y-4">
+          {/* Create Subject */}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newSubjectName.trim()) return;
+              try {
+                await subjectsAPI.create({ name: newSubjectName });
+                toast.success(`Subject "${newSubjectName}" created`);
+                setNewSubjectName('');
+                loadData();
+              } catch (err) {
+                toast.error(err.response?.data?.detail || 'Failed to create subject');
+              }
+            }}
+            className="card flex flex-col sm:flex-row gap-4 items-end"
+          >
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
+              <input
+                type="text"
+                value={newSubjectName}
+                onChange={(e) => setNewSubjectName(e.target.value)}
+                className="input-field"
+                placeholder="e.g. History"
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Add Subject
+            </button>
+          </form>
+
+          {/* Assign Teacher to Subject */}
+          {subjects.filter((s) => !s.is_default || teacher.role === 'hod').length > 0 && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!assignSubjectId || !assignSubjectTeacherId) return;
+                try {
+                  await subjectsAPI.assignTeacher(parseInt(assignSubjectId), {
+                    teacher_id: parseInt(assignSubjectTeacherId),
+                    is_hod: assignSubjectIsHod,
+                  });
+                  toast.success('Teacher assigned to subject');
+                  setAssignSubjectId('');
+                  setAssignSubjectTeacherId('');
+                  setAssignSubjectIsHod(false);
+                  loadData();
+                } catch (err) {
+                  toast.error(err.response?.data?.detail || 'Failed to assign');
+                }
+              }}
+              className="card space-y-4"
+            >
+              <h3 className="text-sm font-semibold text-gray-900">Assign Teacher to Subject</h3>
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                  <select
+                    value={assignSubjectId}
+                    onChange={(e) => setAssignSubjectId(e.target.value)}
+                    className="input-field"
+                    required
+                  >
+                    <option value="">Select subject...</option>
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} {s.is_default ? '(Default)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
+                  <select
+                    value={assignSubjectTeacherId}
+                    onChange={(e) => setAssignSubjectTeacherId(e.target.value)}
+                    className="input-field"
+                    required
+                  >
+                    <option value="">Select teacher...</option>
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-700 pb-2">
+                  <input
+                    type="checkbox"
+                    checked={assignSubjectIsHod}
+                    onChange={(e) => setAssignSubjectIsHod(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  HOD
+                </label>
+                <button type="submit" className="btn-primary flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" /> Assign
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Subject List */}
+          {subjects.length === 0 ? (
+            <div className="card text-center py-12">
+              <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-900">No subjects yet</h3>
+              <p className="text-gray-500 mt-1">Default subjects will appear on next restart.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {subjects.map((s) => (
+                <div key={s.id} className="card flex items-center justify-between py-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-gray-900">{s.name}</h4>
+                      {s.is_default && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {s.teacher_count} teacher{s.teacher_count !== 1 ? 's' : ''}
+                      {s.hod_names?.length > 0 && (
+                        <span> &bull; HOD: {s.hod_names.join(', ')}</span>
+                      )}
+                    </p>
+                  </div>
+                  {!s.is_default && (
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Delete subject "${s.name}"?`)) return;
+                        try {
+                          await subjectsAPI.delete(s.id);
+                          toast.success('Subject deleted');
+                          loadData();
+                        } catch {
+                          toast.error('Failed to delete subject');
+                        }
+                      }}
+                      className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

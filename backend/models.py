@@ -17,6 +17,9 @@ class School(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     invite_code = Column(String, unique=True, index=True, nullable=False, default=_generate_invite_code)
+    school_type = Column(String, nullable=True)  # 'primary' or 'secondary'
+    region = Column(String, nullable=False, default="UK")  # 'UK', 'US', etc.
+    tier = Column(String, nullable=False, default="free")  # 'free', 'standard', 'premium', 'all_access'
     created_at = Column(DateTime, default=datetime.utcnow)
 
     teachers = relationship("Teacher", back_populates="school")
@@ -47,7 +50,9 @@ class Subject(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False)
+    # Nullable: null = platform-level default subject, set = school-specific subject
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
+    is_default = Column(Boolean, default=False)  # True for platform-seeded subjects
     created_at = Column(DateTime, default=datetime.utcnow)
 
     school = relationship("School", back_populates="subjects")
@@ -64,6 +69,7 @@ class Teacher(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default="standalone")  # 'school_admin', 'hod', 'teacher', 'standalone'
     school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
+    tier = Column(String, nullable=False, default="free")  # For standalone teachers: 'free', 'standard', 'premium'
     created_at = Column(DateTime, default=datetime.utcnow)
 
     school = relationship("School", back_populates="teachers")
@@ -79,6 +85,7 @@ class ClassGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     academic_year = Column(String, nullable=False)
+    key_stage = Column(String, nullable=True)  # 'KS1', 'KS2', 'KS3', 'KS4', 'KS5'
     school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
     owner_id = Column(Integer, ForeignKey("teachers.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

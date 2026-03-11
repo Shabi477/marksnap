@@ -104,6 +104,8 @@ export const scanAPI = {
   getFlagged: (batchId) => api.get(`/scan/batch/${batchId}/flagged`),
   correctResult: (resultId, selectedAnswer) =>
     api.put(`/scan/result/${resultId}/correct`, { selected_answer: selectedAnswer }),
+  assignStudent: (resultId, studentId) =>
+    api.put(`/scan/result/${resultId}/assign-student`, { student_id: studentId }),
   scanLive: (testId, imageBlob) => {
     const formData = new FormData();
     formData.append('file', imageBlob, 'scan.jpg');
@@ -121,6 +123,15 @@ export const resultsAPI = {
     const params = classId ? `?class_id=${classId}` : '';
     return api.get(`/results/${testId}/export${params}`, { responseType: 'blob' });
   },
+};
+
+// --- Subjects ---
+export const subjectsAPI = {
+  list: () => api.get('/subjects/'),
+  create: (data) => api.post('/subjects/', data),
+  delete: (id) => api.delete(`/subjects/${id}`),
+  assignTeacher: (subjectId, data) => api.post(`/subjects/${subjectId}/teachers`, data),
+  removeTeacher: (subjectId, teacherId) => api.delete(`/subjects/${subjectId}/teachers/${teacherId}`),
 };
 
 export default api;

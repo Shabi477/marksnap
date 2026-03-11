@@ -42,6 +42,7 @@ def list_classes(
         teacher_names = [t.name for t in c.teachers] if c.teachers else []
         result.append(ClassResponse(
             id=c.id, name=c.name, academic_year=c.academic_year,
+            key_stage=c.key_stage,
             school_id=c.school_id, owner_id=c.owner_id,
             student_count=len(c.students), teacher_names=teacher_names,
             created_at=c.created_at,
@@ -60,6 +61,7 @@ def create_class(
 
     class_group = ClassGroup(
         name=data.name, academic_year=data.academic_year,
+        key_stage=data.key_stage,
         owner_id=teacher.id,
         school_id=teacher.school_id,  # None for standalone
     )
@@ -69,6 +71,7 @@ def create_class(
     return ClassResponse(
         id=class_group.id, name=class_group.name,
         academic_year=class_group.academic_year,
+        key_stage=class_group.key_stage,
         school_id=class_group.school_id, owner_id=class_group.owner_id,
         student_count=0, teacher_names=[],
         created_at=class_group.created_at,
