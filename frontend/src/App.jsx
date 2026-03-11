@@ -14,6 +14,7 @@ import Results from './pages/Results';
 import SchoolManagement from './pages/SchoolManagement';
 import QuestionBank from './pages/QuestionBank';
 import AdminPanel from './pages/AdminPanel';
+import TestBuilder from './pages/TestBuilder';
 
 function ProtectedRoute({ children }) {
   const { teacher, loading } = useAuth();
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="classes" element={<Classes />} />
         <Route path="classes/:classId" element={<ClassDetail />} />
         <Route path="tests" element={<Tests />} />
+        <Route path="tests/build" element={<TestBuilder />} />
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route path="scan/:testId" element={<ScanUpload />} />
         <Route path="live-scan/:testId" element={<LiveScanner />} />

@@ -306,12 +306,6 @@ class TestAutoGenerate(BaseModel):
     subject_id: int
     test_date: Optional[str] = None
     sections: list[AutoGenerateSection]
-    score: int
-    total: int
-    percentage: float
-    flagged_count: int = 0
-    answers: dict[str, Optional[str]] = {}
-    correct: dict[str, bool] = {}
 
 
 # --- Test Assignments ---

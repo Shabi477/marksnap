@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { testsAPI } from '../services/api';
-import { FileText, Plus, Trash2, ArrowRight, Settings } from 'lucide-react';
+import { FileText, Plus, Trash2, ArrowRight, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Tests() {
@@ -81,10 +81,16 @@ export default function Tests() {
           <h1 className="page-title">Tests</h1>
           <p className="page-subtitle">Create tests and generate answer sheets</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          New Test
-        </button>
+        <div className="flex gap-2">
+          <Link to="/tests/build" className="btn-secondary flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Build from Bank
+          </Link>
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            New Test
+          </button>
+        </div>
       </div>
 
       {/* Create form */}
