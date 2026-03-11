@@ -5,4 +5,4 @@ nixPkgs = ["python313", "zbar", "poppler_utils", "postgresql"]
 cmds = ["echo 'Build complete'"]
 
 [start]
-cmd = "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+cmd = "cd backend && LD_LIBRARY_PATH=/root/.nix-profile/lib:$LD_LIBRARY_PATH python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
