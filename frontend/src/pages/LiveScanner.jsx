@@ -212,33 +212,30 @@ export default function LiveScanner() {
     : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to={`/tests/${testId}`} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <div className="flex items-center gap-3">
+        <Link to={`/tests/${testId}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <div className="flex-1">
-          <h1 className="page-title">Live Scanner</h1>
-          <p className="page-subtitle">{test?.name || 'Loading...'}</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-bold text-gray-900 truncate">Live Scanner</h1>
+          <p className="text-xs text-gray-500 truncate">{test?.name || 'Loading...'}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            title={soundEnabled ? 'Mute' : 'Unmute'}
-          >
-            {soundEnabled
-              ? <Volume2 className="w-5 h-5 text-gray-600" />
-              : <VolumeX className="w-5 h-5 text-gray-400" />
-            }
-          </button>
-        </div>
+        <button
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          {soundEnabled
+            ? <Volume2 className="w-4 h-4 text-gray-600" />
+            : <VolumeX className="w-4 h-4 text-gray-400" />
+          }
+        </button>
       </div>
 
-      {/* Camera view */}
-      <div className="overflow-hidden relative rounded-xl">
-        <div className="relative bg-gray-900 aspect-[3/4] max-h-[85vh] flex items-center justify-center">
+      {/* Camera view — full width, cancel Layout padding on mobile */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden relative">
+        <div className="relative bg-black flex items-center justify-center" style={{ height: cameraActive ? 'calc(100vh - 120px)' : 'auto', minHeight: cameraActive ? 0 : 300 }}>
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
@@ -300,14 +297,12 @@ export default function LiveScanner() {
           {/* Scanning guide overlay + capture button */}
           {cameraActive && !processing && !lastResult && (
             <div className="absolute inset-0 flex flex-col">
-              <div className="flex-1 pointer-events-none">
-                <div className="absolute inset-2 border-2 border-white/40 rounded-lg" />
-              </div>
-              <div className="pb-4 pt-1 flex flex-col items-center gap-1 pointer-events-auto">
+              <div className="flex-1" />
+              <div className="pb-5 pt-1 flex flex-col items-center gap-1">
                 <button
                   onClick={processSheet}
                   disabled={processing}
-                  className="w-18 h-18 rounded-full bg-white shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-brand-500"
+                  className="rounded-full bg-white/90 shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-brand-500"
                   style={{ width: 72, height: 72 }}
                 >
                   <Camera className="w-9 h-9 text-brand-600" />
@@ -322,10 +317,10 @@ export default function LiveScanner() {
 
         {/* Camera controls */}
         {cameraActive && (
-          <div className="flex items-center justify-center gap-3 p-3 bg-gray-50 border-t">
+          <div className="absolute top-2 right-2 z-10">
             <button
               onClick={stopCamera}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium bg-red-500/80 text-white text-sm hover:bg-red-600 transition-colors"
             >
               <CameraOff className="w-4 h-4" />
               Stop
