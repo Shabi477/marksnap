@@ -115,14 +115,19 @@ export default function LiveScanner() {
     if (processing || cooldownRef.current) return;
     setProcessing(true);
 
+    // Capture a fresh frame for processing
+    const frame = captureFrame();
     const canvas = canvasRef.current;
-    if (!canvas) { setProcessing(false); return; }
+    if (!canvas || !frame) { setProcessing(false); return; }
 
     try {
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
       if (!blob) { setProcessing(false); return; }
 
-      const res = await scanAPI.scanLive(testId, blob);
+      // Pass the QR data the frontend already detected (more reliable than backend re-reading)
+      const qrString = lastQrRef.current || null;
+
+      const res = await scanAPI.scanLive(testId, blob, qrString);
       const data = res.data;
 
       playBeep(true);

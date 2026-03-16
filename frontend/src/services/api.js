@@ -111,9 +111,10 @@ export const scanAPI = {
     api.put(`/scan/result/${resultId}/correct`, { selected_answer: selectedAnswer }),
   assignStudent: (resultId, studentId) =>
     api.put(`/scan/result/${resultId}/assign-student`, { student_id: studentId }),
-  scanLive: (testId, imageBlob) => {
+  scanLive: (testId, imageBlob, qrData = null) => {
     const formData = new FormData();
     formData.append('file', imageBlob, 'scan.jpg');
+    if (qrData) formData.append('qr_data', qrData);
     return api.post(`/scan/live/${testId}`, formData);
   },
 };

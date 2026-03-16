@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Teacher, Test, ScanBatch, ScanResult, AnswerKey, Student
@@ -9,6 +9,7 @@ from services.scanner import process_scan_batch
 import os
 import uuid
 import shutil
+import json
 
 REVIEW_CONFIDENCE_THRESHOLD = 0.5
 
@@ -317,6 +318,7 @@ def assign_student_to_result(
 async def live_scan(
     test_id: int,
     file: UploadFile = File(...),
+    qr_data: str = Form(None),
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
@@ -345,7 +347,16 @@ async def live_scan(
             out.write(content)
 
         answer_key_map = {(k.question_number, k.section_name): k.correct_answer for k in answer_keys}
-        results = process_scan_batch([file_path], test, answer_key_map, db)
+
+        # Parse frontend-decoded QR data if provided
+        frontend_qr = None
+        if qr_data:
+            try:
+                frontend_qr = json.loads(qr_data)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        results = process_scan_batch([file_path], test, answer_key_map, db, frontend_qr=frontend_qr)
 
         # Build response
         student_code = None

@@ -12,7 +12,7 @@ except ImportError:
     PDF_SUPPORT = False
 
 
-def process_scan_batch(file_paths: list[str], test, answer_key_map: dict, db) -> list[dict]:
+def process_scan_batch(file_paths: list[str], test, answer_key_map: dict, db, frontend_qr: dict = None) -> list[dict]:
     """
     Process a batch of scanned answer sheet images/PDFs.
     Returns a list of result dicts for each question detected.
@@ -35,18 +35,20 @@ def process_scan_batch(file_paths: list[str], test, answer_key_map: dict, db) ->
 
     # Process each image (each should be one answer sheet page)
     for page_idx, pil_image in enumerate(images):
-        page_results = _process_single_page(pil_image, test, answer_key_map, page_idx + 1, db)
+        page_results = _process_single_page(pil_image, test, answer_key_map, page_idx + 1, db, frontend_qr=frontend_qr)
         all_results.extend(page_results)
 
     return all_results
 
 
-def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, page_idx: int, db) -> list[dict]:
+def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, page_idx: int, db, frontend_qr: dict = None) -> list[dict]:
     """Process a single answer sheet page."""
     results = []
 
-    # Read QR code for student identification
+    # Try backend QR reading first, fall back to frontend-provided QR data
     qr_data = read_qr_code(pil_image)
+    if not qr_data and frontend_qr:
+        qr_data = frontend_qr
     student_code = qr_data.get("sid") if qr_data else None
     page_number = qr_data.get("pg", 1) if qr_data else 1
 
