@@ -6,6 +6,7 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://marksnap-production.up.railway.app/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://marksnap-production.up.railway.app/uploads/:path*" }
+    { "source": "/uploads/:path*", "destination": "https://marksnap-production.up.railway.app/uploads/:path*" },
+    { "source": "/((?!api|uploads).*)", "destination": "/index.html" }
   ]
 }
