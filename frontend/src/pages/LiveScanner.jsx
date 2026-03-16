@@ -60,7 +60,7 @@ export default function LiveScanner() {
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 2560 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -233,7 +233,7 @@ export default function LiveScanner() {
 
       {/* Camera view */}
       <div className="card p-0 overflow-hidden relative">
-        <div className="relative bg-gray-900 aspect-video flex items-center justify-center">
+        <div className="relative bg-gray-900 aspect-[3/4] max-h-[75vh] flex items-center justify-center">
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
@@ -298,7 +298,7 @@ export default function LiveScanner() {
               <div className="absolute inset-8 border-2 border-white/30 rounded-xl" />
               <div className="absolute bottom-4 left-0 right-0 text-center">
                 <span className="bg-black/50 text-white text-sm px-4 py-2 rounded-full">
-                  Point at answer sheet QR code
+                  Frame the entire answer sheet (QR code + bubbles)
                 </span>
               </div>
             </div>
