@@ -84,6 +84,31 @@ def list_teachers(
     return result
 
 
+@router.put("/teachers/{teacher_id}/role")
+def update_teacher_role(
+    teacher_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Update a teacher's role (HOD/school_admin only)."""
+    require_hod(teacher)
+    if teacher_id == teacher.id:
+        raise HTTPException(status_code=403, detail="Cannot modify your own role")
+    target = db.query(Teacher).filter(
+        Teacher.id == teacher_id,
+        Teacher.school_id == teacher.school_id,
+    ).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    new_role = data.get("role")
+    if new_role not in ("teacher", "sendco", "hod", "school_admin"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    target.role = new_role
+    db.commit()
+    return {"id": target.id, "name": target.name, "role": target.role}
+
+
 # --- Classes (HOD creates for school) ---
 @router.get("/classes", response_model=list[ClassResponse])
 def list_school_classes(

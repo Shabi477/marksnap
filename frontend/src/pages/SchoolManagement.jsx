@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { schoolAPI, testsAPI, subjectsAPI } from '../services/api';
+import Spinner from '../components/Spinner';
 import {
   Building2, Users, Copy, RefreshCw, Plus, Trash2, Upload,
   Search, ArrowRightLeft, UserPlus, BookOpen, Send,
@@ -229,7 +230,7 @@ export default function SchoolManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }
@@ -538,9 +539,11 @@ export default function SchoolManagement() {
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       t.role === 'hod'
                         ? 'bg-brand-100 text-brand-700'
+                        : t.role === 'sendco'
+                        ? 'bg-amber-100 text-amber-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {t.role === 'hod' ? 'HOD' : 'Teacher'}
+                      {t.role === 'hod' ? 'HOD' : t.role === 'sendco' ? 'SENDCO' : t.role === 'school_admin' ? 'Admin' : 'Teacher'}
                     </span>
                   </div>
                 </div>

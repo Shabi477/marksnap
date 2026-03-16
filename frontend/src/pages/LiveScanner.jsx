@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { scanAPI, testsAPI } from '../services/api';
+import Spinner from '../components/Spinner';
 import jsQR from 'jsqr';
 import {
   ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, AlertTriangle,
@@ -256,7 +257,7 @@ export default function LiveScanner() {
           {processing && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <div className="bg-white rounded-2xl p-6 text-center shadow-xl">
-                <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mx-auto mb-3" />
+                <Spinner size="lg" className="mx-auto mb-3" />
                 <p className="font-semibold text-gray-700">Processing...</p>
               </div>
             </div>

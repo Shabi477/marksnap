@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Spinner from '../components/Spinner';
 import { classesAPI, testsAPI } from '../services/api';
 import { Users, FileText, ScanLine, BarChart3, Plus, ArrowRight } from 'lucide-react';
 
@@ -24,7 +25,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }

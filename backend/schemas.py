@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime, date
 
@@ -25,6 +25,7 @@ class TeacherCreate(BaseModel):
     name: str
     password: str
     invite_code: Optional[str] = None  # None = standalone, provided = join school
+    role: Optional[str] = None  # 'sendco' when registering as SENDCO with invite code
 
 class SchoolRegister(BaseModel):
     school_name: str
@@ -221,6 +222,7 @@ class TopicResponse(BaseModel):
 
 
 # --- Questions ---
+
 class QuestionCreate(BaseModel):
     topic_id: int
     subject_id: int
@@ -234,6 +236,27 @@ class QuestionCreate(BaseModel):
     correct_answer: str  # 'A'-'E'
     difficulty: str = "medium"  # easy/medium/hard
     source: str = "system"  # system/school/teacher
+
+    @field_validator('correct_answer')
+    @classmethod
+    def validate_correct_answer(cls, v):
+        if v.upper() not in ('A', 'B', 'C', 'D', 'E'):
+            raise ValueError('correct_answer must be A, B, C, D, or E')
+        return v.upper()
+
+    @field_validator('difficulty')
+    @classmethod
+    def validate_difficulty(cls, v):
+        if v not in ('easy', 'medium', 'hard'):
+            raise ValueError('difficulty must be easy, medium, or hard')
+        return v
+
+    @field_validator('source')
+    @classmethod
+    def validate_source(cls, v):
+        if v not in ('system', 'school', 'teacher'):
+            raise ValueError('source must be system, school, or teacher')
+        return v
     school_id: Optional[int] = None
     image_url: Optional[str] = None
     explanation: Optional[str] = None
@@ -311,12 +334,34 @@ class AutoGenerateSection(BaseModel):
     topic_ids: list[int]
     count: int
     difficulty_mix: Optional[dict] = None  # {"easy": 5, "medium": 10, "hard": 5}
+    difficulty: Optional[str] = None  # single difficulty filter (when no mix)
+    skill_type: Optional[str] = None  # fluency/reasoning/problem_solving
 
 class TestAutoGenerate(BaseModel):
     name: str
     subject_id: int
     test_date: Optional[str] = None
     sections: list[AutoGenerateSection]
+
+
+# --- AI Question Generation ---
+class AIGenerateRequest(BaseModel):
+    topic_id: int
+    subject_id: int
+    count: int = 5  # 1-20
+    difficulty: str = "medium"
+    key_stage: str = "KS3"
+    year_group: Optional[str] = None
+    num_options: int = 4
+    skill_type: Optional[str] = None
+    source: str = "system"
+
+
+class DiagramGenerateRequest(BaseModel):
+    question_id: int
+    description: str
+    diagram_type: str = "general"
+    extra_context: Optional[str] = None
 
 
 # --- Test Assignments ---

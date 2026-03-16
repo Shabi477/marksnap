@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { questionsAPI, topicsAPI, subjectsAPI, getUploadUrl } from '../services/api';
 import toast from 'react-hot-toast';
+import { difficultyColor } from '../utils/helpers';
+import useStrandCategories from '../hooks/useStrandCategories';
+import { RefreshCw } from 'lucide-react';
 
 export default function QuestionBank() {
   const [subjects, setSubjects] = useState([]);
@@ -13,6 +16,7 @@ export default function QuestionBank() {
   const [expandedQ, setExpandedQ] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(null);
   const fileInputRef = useRef(null);
+
 
   useEffect(() => {
     subjectsAPI.list().then(r => setSubjects(r.data));
@@ -30,17 +34,8 @@ export default function QuestionBank() {
     }
   }, [selectedSubject, filters.key_stage, filters.strand, filters.area]);
 
-  // Detect category:sub format and derive strand options
-  const allStrands = [...new Set(topics.map(t => t.strand).filter(Boolean))].sort();
-  const hasCategories = allStrands.some(s => s.includes(':'));
-  const categories = hasCategories
-    ? [...new Set(allStrands.map(s => s.split(':')[0].trim()))].sort()
-    : [];
-  const areas = hasCategories && filters.strand
-    ? [...new Set(allStrands.filter(s => s.startsWith(filters.strand + ':')).map(s => s.split(':').slice(1).join(':').trim()))].sort()
-    : [];
-  // For non-category subjects, show raw strands
-  const strands = hasCategories ? categories : allStrands;
+  // Derive strand/category/area options from topics
+  const { hasCategories, strandOptions: strands, areaOptions: areas } = useStrandCategories(topics, filters.strand);
 
   useEffect(() => {
     fetchQuestions();
@@ -95,13 +90,6 @@ export default function QuestionBank() {
     }
   };
 
-  const difficultyColor = (d) => {
-    if (d === 'easy') return 'bg-green-100 text-green-800';
-    if (d === 'medium') return 'bg-yellow-100 text-yellow-800';
-    if (d === 'hard') return 'bg-red-100 text-red-800';
-    return 'bg-gray-100 text-gray-800';
-  };
-
   const answerLabel = (q, letter) => {
     const key = `option_${letter.toLowerCase()}`;
     return q[key];
@@ -111,7 +99,15 @@ export default function QuestionBank() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Question Bank</h1>
-        <span className="text-sm text-gray-500">{questions.length} question{questions.length !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { fetchQuestions(); toast.success('Refreshed'); }}
+            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 flex items-center gap-1"
+          >
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
+          <span className="text-sm text-gray-500">{questions.length} question{questions.length !== 1 ? 's' : ''}</span>
+        </div>
       </div>
 
       {/* Filters */}
@@ -121,7 +117,7 @@ export default function QuestionBank() {
           <select
             value={selectedSubject || ''}
             onChange={e => setSelectedSubject(e.target.value ? Number(e.target.value) : null)}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
           >
             <option value="">Select Subject</option>
             {subjects.map(s => (
@@ -133,7 +129,7 @@ export default function QuestionBank() {
           <select
             value={filters.key_stage}
             onChange={e => setFilters(f => ({ ...f, key_stage: e.target.value, strand: '', area: '' }))}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
           >
             <option value="">All Key Stages</option>
             <option value="KS1">KS1</option>
@@ -146,7 +142,7 @@ export default function QuestionBank() {
           <select
             value={filters.strand}
             onChange={e => setFilters(f => ({ ...f, strand: e.target.value, area: '' }))}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
             disabled={!selectedSubject}
           >
             <option value="">{hasCategories ? 'All Categories' : 'All Strands'}</option>
@@ -160,7 +156,7 @@ export default function QuestionBank() {
             <select
               value={filters.area}
               onChange={e => setFilters(f => ({ ...f, area: e.target.value }))}
-              className="rounded-lg border-gray-300 text-xs"
+              className="rounded-lg border-gray-300 text-sm py-2"
               disabled={!filters.strand}
             >
               <option value="">All Areas</option>
@@ -174,7 +170,7 @@ export default function QuestionBank() {
           <select
             value={selectedTopic || ''}
             onChange={e => setSelectedTopic(e.target.value ? Number(e.target.value) : null)}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
             disabled={!selectedSubject}
           >
             <option value="">All Topics</option>
@@ -187,7 +183,7 @@ export default function QuestionBank() {
           <select
             value={filters.difficulty}
             onChange={e => setFilters(f => ({ ...f, difficulty: e.target.value }))}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
           >
             <option value="">All Difficulties</option>
             <option value="easy">Easy</option>
@@ -199,7 +195,7 @@ export default function QuestionBank() {
           <select
             value={filters.skill_type}
             onChange={e => setFilters(f => ({ ...f, skill_type: e.target.value }))}
-            className="rounded-lg border-gray-300 text-xs"
+            className="rounded-lg border-gray-300 text-sm py-2"
           >
             <option value="">All Skill Types</option>
             <option value="fluency">Fluency</option>
@@ -215,7 +211,7 @@ export default function QuestionBank() {
             placeholder="Search questions..."
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-            className="flex-1 rounded-lg border-gray-300 text-xs"
+            className="flex-1 rounded-lg border-gray-300 text-sm py-2"
           />
           <button type="submit" className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">
             Search
@@ -245,7 +241,7 @@ export default function QuestionBank() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-gray-400">#{idx + 1}</span>
+                      <span className="text-xs font-medium text-gray-400">Q{q.id}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColor(q.difficulty)}`}>
                         {q.difficulty}
                       </span>
@@ -326,13 +322,13 @@ export default function QuestionBank() {
                     } catch { return null; }
                   })()}
                   {/* Image management */}
-                  <div className="mt-3 flex items-center gap-3">
+                  <div className="mt-3 space-y-2">
                     {q.image_url ? (
                       <div className="flex items-center gap-3">
                         <img
                           src={getUploadUrl(q.image_url)}
                           alt="Question diagram"
-                          className="max-h-48 rounded border border-gray-200 object-contain"
+                          className="max-h-80 rounded border border-gray-200 object-contain"
                         />
                         <button
                           onClick={() => handleImageDelete(q.id)}
@@ -343,23 +339,23 @@ export default function QuestionBank() {
                       </div>
                     ) : (
                       <label className="cursor-pointer px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs hover:bg-gray-200 inline-flex items-center gap-1">
-                        {uploadingImage === q.id ? (
-                          <span>Uploading...</span>
-                        ) : (
-                          <>
-                            <span>+ Add image</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={e => {
-                                if (e.target.files[0]) handleImageUpload(q.id, e.target.files[0]);
-                                e.target.value = '';
-                              }}
-                            />
-                          </>
-                        )}
-                      </label>
+                          {uploadingImage === q.id ? (
+                            <span>Uploading...</span>
+                          ) : (
+                            <>
+                              <span>+ Add image</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => {
+                                  if (e.target.files[0]) handleImageUpload(q.id, e.target.files[0]);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </>
+                          )}
+                        </label>
                     )}
                   </div>
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">

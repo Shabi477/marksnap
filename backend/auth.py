@@ -9,7 +9,9 @@ from database import get_db
 from models import Teacher
 import os
 
-SECRET_KEY = os.getenv("SECRET_KEY", "marksnap-dev-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is required")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
 

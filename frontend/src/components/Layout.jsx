@@ -10,6 +10,7 @@ import {
   Building2,
   BookOpen,
   Shield,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,18 +19,37 @@ export default function Layout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
-    { to: '/classes', icon: Users, label: 'Classes' },
-    { to: '/tests', icon: FileText, label: 'Tests' },
-    { to: '/questions', icon: BookOpen, label: 'Question Bank' },
-    ...(teacher?.role === 'hod' || teacher?.role === 'school_admin'
-      ? [{ to: '/school', icon: Building2, label: 'School' }]
-      : []),
-    ...(teacher?.role === 'super_admin'
-      ? [{ to: '/admin', icon: Shield, label: 'Admin' }]
-      : []),
-  ];
+  const role = teacher?.role;
+  const isAdmin = role === 'super_admin' || role === 'school_admin' || role === 'hod';
+
+  // SENDCOs get a focused view: Dashboard, Classes, Assessments
+  // Teachers (school staff) get a minimal view: Dashboard, Classes, Assessments
+  // Admins/standalone get the full app
+  const navItems = role === 'sendco'
+    ? [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/classes', icon: Users, label: 'Classes' },
+        { to: '/assessments', icon: ClipboardCheck, label: 'Assessments' },
+      ]
+    : role === 'teacher'
+    ? [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/classes', icon: Users, label: 'Classes' },
+        { to: '/assessments', icon: ClipboardCheck, label: 'Assessments' },
+      ]
+    : [
+        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/classes', icon: Users, label: 'Classes' },
+        { to: '/assessments', icon: ClipboardCheck, label: 'Assessments' },
+        { to: '/tests', icon: FileText, label: 'Tests' },
+        { to: '/questions', icon: BookOpen, label: 'Question Bank' },
+        ...(role === 'hod' || role === 'school_admin'
+          ? [{ to: '/school', icon: Building2, label: 'School' }]
+          : []),
+        ...(role === 'super_admin'
+          ? [{ to: '/admin', icon: Shield, label: 'Content Mgmt' }]
+          : []),
+      ];
 
   const handleLogout = () => {
     logout();

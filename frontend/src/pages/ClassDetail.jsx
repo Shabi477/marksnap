@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { classesAPI } from '../services/api';
+import Spinner from '../components/Spinner';
 import { ArrowLeft, Plus, Upload, User, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -107,7 +108,7 @@ export default function ClassDetail() {
       {/* Students list */}
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+          <Spinner />
         </div>
       ) : students.length === 0 ? (
         <div className="card text-center py-12">

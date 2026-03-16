@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionsAPI, topicsAPI, subjectsAPI, testGenerateAPI, getUploadUrl } from '../services/api';
+import { difficultyColor } from '../utils/helpers';
+import Spinner from '../components/Spinner';
 import {
   ArrowLeft, Search, Plus, Minus, CheckCircle2, Sparkles, Eye,
   ChevronDown, ChevronUp, Trash2, Shuffle, GripVertical,
@@ -34,9 +36,15 @@ export default function TestBuilder() {
   // Auto mode state
   const [autoTopics, setAutoTopics] = useState([]); // selected topic IDs
   const [autoCount, setAutoCount] = useState(20);
+  const [collapsedStrands, setCollapsedStrands] = useState(new Set());
+  const [showCustomCount, setShowCustomCount] = useState(false);
   const [useDifficultyMix, setUseDifficultyMix] = useState(false);
   const [difficultyMix, setDifficultyMix] = useState({ easy: 5, medium: 10, hard: 5 });
   const [autoKeyStage, setAutoKeyStage] = useState('');
+  const [autoStrand, setAutoStrand] = useState('');
+  const [autoArea, setAutoArea] = useState('');
+  const [autoDifficulty, setAutoDifficulty] = useState('');
+  const [autoSkillType, setAutoSkillType] = useState('');
 
   useEffect(() => {
     subjectsAPI.list().then(r => setSubjects(r.data));
@@ -49,8 +57,13 @@ export default function TestBuilder() {
         strand: (mode === 'pick' ? (filters.area || filters.strand) : undefined) || undefined,
       }).then(r => {
         setTopics(r.data);
-        // Auto mode: pre-select all topics
-        if (mode === 'auto') setAutoTopics(r.data.map(t => t.id));
+        // Auto mode: pre-select all topics, start strands collapsed
+        if (mode === 'auto') {
+          setAutoTopics(r.data.map(t => t.id));
+          const strandNames = [...new Set(r.data.map(t => t.strand).filter(Boolean))];
+          if (r.data.some(t => !t.strand)) strandNames.push('_other');
+          setCollapsedStrands(new Set(strandNames));
+        }
       });
       setSelectedTopic(null);
     } else {
@@ -163,13 +176,6 @@ export default function TestBuilder() {
       toast.error(err.response?.data?.detail || 'Failed to create test');
     }
     setCreating(false);
-  };
-
-  const difficultyColor = (d) => {
-    if (d === 'easy') return 'bg-green-100 text-green-800';
-    if (d === 'medium') return 'bg-yellow-100 text-yellow-800';
-    if (d === 'hard') return 'bg-red-100 text-red-800';
-    return 'bg-gray-100 text-gray-800';
   };
 
   const totalMixCount = Object.values(difficultyMix).reduce((a, b) => a + b, 0);
@@ -400,7 +406,7 @@ export default function TestBuilder() {
                 </div>
               ) : loadingQ ? (
                 <div className="text-center py-16 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-gray-200 border-t-brand-500 rounded-full animate-spin mx-auto" />
+                  <Spinner className="mx-auto" />
                 </div>
               ) : questions.length === 0 ? (
                 <div className="text-center py-16 text-gray-400">
@@ -620,56 +626,83 @@ export default function TestBuilder() {
                   </select>
                 </div>
 
-                {/* Topics grouped by strand */}
+                {/* Topics grouped by strand — collapsible */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Topics ({autoTopics.length} of {topics.length} selected)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Topics ({autoTopics.length} of {topics.length} selected)
+                    </label>
+                    <div className="flex gap-3">
+                      <button onClick={() => { setAutoTopics(topics.map(t => t.id)); setCollapsedStrands(new Set()); }} className="text-xs text-brand-600 hover:text-brand-800 font-medium">Select all</button>
+                      <button onClick={() => setAutoTopics([])} className="text-xs text-gray-500 hover:text-gray-700 font-medium">Deselect all</button>
+                      <button onClick={() => setCollapsedStrands(new Set())} className="text-xs text-gray-500 hover:text-gray-700">Expand all</button>
+                      <button onClick={() => setCollapsedStrands(new Set([...strands, '_other']))} className="text-xs text-gray-500 hover:text-gray-700">Collapse all</button>
+                    </div>
+                  </div>
                   {strands.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       {strands.map(strand => {
                         const strandTopics = topics.filter(t => t.strand === strand);
                         if (strandTopics.length === 0) return null;
-                        const allSelected = strandTopics.every(t => autoTopics.includes(t.id));
+                        const selectedCount = strandTopics.filter(t => autoTopics.includes(t.id)).length;
+                        const allSelected = selectedCount === strandTopics.length;
+                        const someSelected = selectedCount > 0 && !allSelected;
+                        const isCollapsed = collapsedStrands.has(strand);
                         return (
-                          <div key={strand}>
-                            <button
-                              onClick={() => {
-                                const ids = strandTopics.map(t => t.id);
-                                if (allSelected) {
-                                  setAutoTopics(autoTopics.filter(id => !ids.includes(id)));
-                                } else {
-                                  setAutoTopics([...new Set([...autoTopics, ...ids])]);
-                                }
-                              }}
-                              className={`text-xs font-semibold mb-1 px-2 py-0.5 rounded ${allSelected ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                            >
-                              {strand} ({strandTopics.length})
-                            </button>
-                            <div className="flex flex-wrap gap-1.5 ml-1">
-                              {strandTopics.map(t => {
-                                const selected = autoTopics.includes(t.id);
-                                return (
-                                  <button
-                                    key={t.id}
-                                    onClick={() => {
-                                      setAutoTopics(selected
-                                        ? autoTopics.filter(id => id !== t.id)
-                                        : [...autoTopics, t.id]
-                                      );
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                      selected
-                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                  >
-                                    {t.name}
-                                    <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
-                                  </button>
-                                );
+                          <div key={strand} className="border border-gray-200 rounded-lg overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                              onClick={() => setCollapsedStrands(s => {
+                                const next = new Set(s);
+                                if (next.has(strand)) next.delete(strand); else next.add(strand);
+                                return next;
                               })}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={allSelected}
+                                ref={el => { if (el) el.indeterminate = someSelected; }}
+                                onChange={e => {
+                                  e.stopPropagation();
+                                  const ids = strandTopics.map(t => t.id);
+                                  if (allSelected) {
+                                    setAutoTopics(autoTopics.filter(id => !ids.includes(id)));
+                                  } else {
+                                    setAutoTopics([...new Set([...autoTopics, ...ids])]);
+                                  }
+                                }}
+                                onClick={e => e.stopPropagation()}
+                                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                              />
+                              <span className="flex-1 text-sm font-semibold text-gray-700">{strand}</span>
+                              <span className="text-xs text-gray-400">{selectedCount}/{strandTopics.length} topics</span>
+                              {isCollapsed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                             </div>
+                            {!isCollapsed && (
+                              <div className="flex flex-wrap gap-1.5 px-3 py-2">
+                                {strandTopics.map(t => {
+                                  const selected = autoTopics.includes(t.id);
+                                  return (
+                                    <button
+                                      key={t.id}
+                                      onClick={() => {
+                                        setAutoTopics(selected
+                                          ? autoTopics.filter(id => id !== t.id)
+                                          : [...autoTopics, t.id]
+                                        );
+                                      }}
+                                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                        selected
+                                          ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      {t.name}
+                                      <span className="ml-1 opacity-60">({t.question_count})</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -677,33 +710,65 @@ export default function TestBuilder() {
                       {(() => {
                         const noStrand = topics.filter(t => !t.strand);
                         if (noStrand.length === 0) return null;
+                        const selectedCount = noStrand.filter(t => autoTopics.includes(t.id)).length;
+                        const allSelected = selectedCount === noStrand.length;
+                        const someSelected = selectedCount > 0 && !allSelected;
+                        const isCollapsed = collapsedStrands.has('_other');
                         return (
-                          <div>
-                            <span className="text-xs font-semibold text-gray-500 mb-1 block">Other</span>
-                            <div className="flex flex-wrap gap-1.5 ml-1">
-                              {noStrand.map(t => {
-                                const selected = autoTopics.includes(t.id);
-                                return (
-                                  <button
-                                    key={t.id}
-                                    onClick={() => {
-                                      setAutoTopics(selected
-                                        ? autoTopics.filter(id => id !== t.id)
-                                        : [...autoTopics, t.id]
-                                      );
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                      selected
-                                        ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                  >
-                                    {t.name}
-                                    <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
-                                  </button>
-                                );
+                          <div className="border border-gray-200 rounded-lg overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                              onClick={() => setCollapsedStrands(s => {
+                                const next = new Set(s);
+                                if (next.has('_other')) next.delete('_other'); else next.add('_other');
+                                return next;
                               })}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={allSelected}
+                                ref={el => { if (el) el.indeterminate = someSelected; }}
+                                onChange={e => {
+                                  e.stopPropagation();
+                                  const ids = noStrand.map(t => t.id);
+                                  if (allSelected) {
+                                    setAutoTopics(autoTopics.filter(id => !ids.includes(id)));
+                                  } else {
+                                    setAutoTopics([...new Set([...autoTopics, ...ids])]);
+                                  }
+                                }}
+                                onClick={e => e.stopPropagation()}
+                                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                              />
+                              <span className="flex-1 text-sm font-semibold text-gray-700">Other</span>
+                              <span className="text-xs text-gray-400">{selectedCount}/{noStrand.length} topics</span>
+                              {isCollapsed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                             </div>
+                            {!isCollapsed && (
+                              <div className="flex flex-wrap gap-1.5 px-3 py-2">
+                                {noStrand.map(t => {
+                                  const selected = autoTopics.includes(t.id);
+                                  return (
+                                    <button
+                                      key={t.id}
+                                      onClick={() => {
+                                        setAutoTopics(selected
+                                          ? autoTopics.filter(id => id !== t.id)
+                                          : [...autoTopics, t.id]
+                                        );
+                                      }}
+                                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                        selected
+                                          ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      {t.name}
+                                      <span className="ml-1 opacity-60">({t.question_count})</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
@@ -721,36 +786,60 @@ export default function TestBuilder() {
                                 : [...autoTopics, t.id]
                               );
                             }}
-                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                               selected
                                 ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                             }`}
                           >
                             {t.name}
-                            <span className="ml-1 text-xs opacity-60">({t.question_count})</span>
+                            <span className="ml-1 opacity-60">({t.question_count})</span>
                           </button>
                         );
                       })}
                     </div>
                   )}
-                  <div className="mt-2 flex gap-2">
-                    <button onClick={() => setAutoTopics(topics.map(t => t.id))} className="text-xs text-brand-600 hover:text-brand-800">Select all</button>
-                    <button onClick={() => setAutoTopics([])} className="text-xs text-gray-500 hover:text-gray-700">Deselect all</button>
-                  </div>
                 </div>
 
                 {/* Number of questions */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={autoCount}
-                    onChange={e => setAutoCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-32 rounded-lg border-gray-300 text-sm"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of Questions</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[5, 10, 15, 20, 25, 30].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => { setAutoCount(n); setShowCustomCount(false); }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          autoCount === n && !showCustomCount
+                            ? 'bg-brand-600 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setShowCustomCount(!showCustomCount)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        showCustomCount
+                          ? 'bg-brand-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                    {showCustomCount && (
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={autoCount}
+                        onChange={e => setAutoCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-20 rounded-lg border-gray-300 text-sm"
+                        autoFocus
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Difficulty mix toggle */}

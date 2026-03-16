@@ -22,6 +22,7 @@ export default function Login() {
   const [schoolType, setSchoolType] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [registerRole, setRegisterRole] = useState('');
 
   if (teacher) {
     navigate('/');
@@ -35,6 +36,7 @@ export default function Login() {
     setInviteCode('');
     setSchoolName('');
     setSchoolType('');
+    setRegisterRole('');
   };
 
   const handleSubmit = async (e) => {
@@ -48,7 +50,7 @@ export default function Login() {
         await registerSchool(schoolName, name, email, password, schoolType);
         toast.success('School registered! Welcome to MarkSnap.');
       } else {
-        await register(name, email, password, inviteCode);
+        await register(name, email, password, inviteCode, registerRole || undefined);
         toast.success('Account created! Welcome to MarkSnap.');
       }
       navigate('/');
@@ -174,6 +176,36 @@ export default function Login() {
                 <p className="text-xs text-gray-400 mt-1">
                   Leave blank to register as a standalone teacher
                 </p>
+              </div>
+            )}
+
+            {mode === MODES.REGISTER && inviteCode.trim() && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your Role</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRegisterRole('')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      registerRole !== 'sendco'
+                        ? 'border-brand-300 bg-brand-50 text-brand-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Teacher
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterRole('sendco')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      registerRole === 'sendco'
+                        ? 'border-brand-300 bg-brand-50 text-brand-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    SENDCO
+                  </button>
+                </div>
               </div>
             )}
 

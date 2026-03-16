@@ -26,8 +26,8 @@ export function AuthProvider({ children }) {
     setTeacher(me.data);
   };
 
-  const register = async (name, email, password, inviteCode) => {
-    await authAPI.register({ name, email, password, invite_code: inviteCode || undefined });
+  const register = async (name, email, password, inviteCode, role) => {
+    await authAPI.register({ name, email, password, invite_code: inviteCode || undefined, role: role || undefined });
     await login(email, password);
   };
 

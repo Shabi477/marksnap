@@ -6,7 +6,7 @@ const baseURL = import.meta.env.VITE_API_URL
 
 // For uploaded files (images, etc.) - resolve to backend root
 const backendRoot = import.meta.env.VITE_API_URL || '';
-export const getUploadUrl = (path) => path ? `${backendRoot}/${path}` : null;
+export const getUploadUrl = (path) => path ? `${backendRoot}/${path}?t=${Date.now()}` : null;
 
 const api = axios.create({
   baseURL,
@@ -91,6 +91,7 @@ export const testsAPI = {
   delete: (id) => api.delete(`/tests/${id}`),
   setAnswerKey: (testId, data) => api.post(`/tests/${testId}/answer-key`, data),
   getAnswerKey: (testId) => api.get(`/tests/${testId}/answer-key`),
+  getQuestions: (testId) => api.get(`/tests/${testId}/questions`),
   downloadSheets: (testId, classId) =>
     api.get(`/tests/${testId}/sheets/${classId}`, { responseType: 'blob' }),
 };
@@ -159,6 +160,10 @@ export const questionsAPI = {
   update: (id, data) => api.put(`/questions/${id}`, data),
   delete: (id) => api.delete(`/questions/${id}`),
   bulkCreate: (questions) => api.post('/questions/bulk', questions),
+  flag: (id, reason = 'poor_quality', comment = null) =>
+    api.post(`/questions/${id}/flag`, null, { params: { reason, ...(comment ? { comment } : {}) } }),
+  unflag: (id) => api.delete(`/questions/${id}/flag`),
+  listFlagged: (limit = 50) => api.get('/questions/flagged/list', { params: { limit } }),
   uploadImage: (id, file) => {
     const form = new FormData();
     form.append('file', file);
@@ -167,6 +172,8 @@ export const questionsAPI = {
     });
   },
   deleteImage: (id) => api.delete(`/questions/${id}/image`),
+  generateDiagram: (id, data) => api.post(`/questions/${id}/generate-diagram`, data),
+  aiGenerate: (data) => api.post('/questions/ai-generate', data),
 };
 
 // --- Test Generation from Bank ---

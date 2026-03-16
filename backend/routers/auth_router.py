@@ -39,7 +39,7 @@ def register(data: TeacherCreate, db: Session = Depends(get_db)):
         if not school:
             raise HTTPException(status_code=400, detail="Invalid invite code")
         school_id = school.id
-        role = "teacher"
+        role = data.role if data.role in ("sendco",) else "teacher"
 
     teacher = Teacher(
         email=data.email,

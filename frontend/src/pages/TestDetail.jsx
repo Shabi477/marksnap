@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { testsAPI, classesAPI } from '../services/api';
+import Spinner from '../components/Spinner';
 import {
   ArrowLeft, Download, ScanLine, BarChart3, Save, FileText, CheckCircle2, Camera,
 } from 'lucide-react';
@@ -104,7 +105,7 @@ export default function TestDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }

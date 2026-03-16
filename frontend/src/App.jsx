@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import Spinner from './components/Spinner';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -15,6 +17,7 @@ import SchoolManagement from './pages/SchoolManagement';
 import QuestionBank from './pages/QuestionBank';
 import AdminPanel from './pages/AdminPanel';
 import TestBuilder from './pages/TestBuilder';
+import Assessments from './pages/Assessments';
 
 function ProtectedRoute({ children }) {
   const { teacher, loading } = useAuth();
@@ -23,7 +26,7 @@ function ProtectedRoute({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+          <Spinner size="lg" />
           <p className="text-gray-500">Loading MarkSnap...</p>
         </div>
       </div>
@@ -51,6 +54,7 @@ function AppRoutes() {
         <Route path="classes/:classId" element={<ClassDetail />} />
         <Route path="tests" element={<Tests />} />
         <Route path="tests/build" element={<TestBuilder />} />
+        <Route path="assessments" element={<Assessments />} />
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route path="scan/:testId" element={<ScanUpload />} />
         <Route path="live-scan/:testId" element={<LiveScanner />} />
@@ -73,7 +77,9 @@ export default function App() {
           duration: 3000,
         }}
       />
-      <AppRoutes />
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

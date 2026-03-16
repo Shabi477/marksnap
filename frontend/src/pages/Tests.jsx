@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { testsAPI } from '../services/api';
+import Spinner from '../components/Spinner';
 import { FileText, Plus, Trash2, ArrowRight, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -69,7 +70,7 @@ export default function Tests() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }

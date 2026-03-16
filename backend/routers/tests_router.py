@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, Question, TestQuestion, teacher_classes
+from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, Question, TestQuestion, teacher_classes, QuestionFlag
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry, TestGenerate, TestAutoGenerate
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
@@ -325,6 +325,79 @@ def download_test_paper(
     return FileResponse(file_path, filename=os.path.basename(file_path))
 
 
+@router.get("/{test_id}/questions")
+def get_test_questions(
+    test_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Return the full questions for a bank-generated test."""
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test, db):
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    tqs = (
+        db.query(TestQuestion)
+        .filter(TestQuestion.test_id == test_id)
+        .order_by(TestQuestion.question_number)
+        .all()
+    )
+
+    # Check if current user has flagged any of these questions
+    from sqlalchemy import and_
+    flagged_ids = set()
+    if tqs:
+        q_ids = [tq.question_id for tq in tqs]
+        user_flags = db.query(QuestionFlag.question_id).filter(
+            QuestionFlag.question_id.in_(q_ids),
+            QuestionFlag.teacher_id == teacher.id,
+        ).all()
+        flagged_ids = {f.question_id for f in user_flags}
+
+        # Also get total flag counts
+        flag_counts_q = (
+            db.query(QuestionFlag.question_id, func.count(QuestionFlag.id).label("cnt"))
+            .filter(QuestionFlag.question_id.in_(q_ids))
+            .group_by(QuestionFlag.question_id)
+            .all()
+        )
+        flag_counts = {r.question_id: r.cnt for r in flag_counts_q}
+    else:
+        flag_counts = {}
+
+    result = []
+    for tq in tqs:
+        q = tq.question
+        if not q:
+            continue
+        result.append({
+            "question_number": tq.question_number,
+            "section_name": tq.section_name,
+            "question_id": q.id,
+            "question_text": q.question_text,
+            "option_a": q.option_a,
+            "option_b": q.option_b,
+            "option_c": q.option_c,
+            "option_d": q.option_d,
+            "option_e": q.option_e,
+            "num_options": q.num_options,
+            "correct_answer": q.correct_answer,
+            "difficulty": q.difficulty,
+            "skill_type": q.skill_type,
+            "topic_name": q.topic.name if q.topic else None,
+            "strand": q.topic.strand if q.topic else None,
+            "key_stage": q.key_stage,
+            "year_group": q.year_group,
+            "explanation": q.explanation,
+            "distractor_rationale": q.distractor_rationale,
+            "image_url": q.image_url,
+            "source": q.source,
+            "flagged_by_me": q.id in flagged_ids,
+            "flag_count": flag_counts.get(q.id, 0),
+        })
+    return result
+
+
 @router.post("/generate", response_model=TestResponse)
 def generate_test_from_bank(
     data: TestGenerate,
@@ -341,9 +414,9 @@ def generate_test_from_bank(
     for sec in data.sections:
         all_q_ids.extend(sec.question_ids)
 
-    # Validate all questions exist and are active
+    # Validate all questions exist, are active, and approved
     questions = db.query(Question).filter(
-        Question.id.in_(all_q_ids), Question.is_active == True
+        Question.id.in_(all_q_ids), Question.is_active == True, Question.status == "approved"
     ).all()
     q_map = {q.id: q for q in questions}
 
@@ -425,19 +498,30 @@ def auto_generate_test(
     for sec in data.sections:
         selected_ids = []
 
+        # Base filter builder
+        def _base_filter():
+            filters = [
+                Question.subject_id == data.subject_id,
+                Question.topic_id.in_(sec.topic_ids),
+                Question.is_active == True,
+                Question.status == "approved",
+            ]
+            if used_ids:
+                filters.append(~Question.id.in_(used_ids))
+            if sec.skill_type:
+                filters.append(Question.skill_type == sec.skill_type)
+            if sec.difficulty and not sec.difficulty_mix:
+                filters.append(Question.difficulty == sec.difficulty)
+            return filters
+
         if sec.difficulty_mix:
             # Pick questions per difficulty level
             for difficulty, count in sec.difficulty_mix.items():
+                base = _base_filter()
+                base.append(Question.difficulty == difficulty)
                 pool = (
                     db.query(Question)
-                    .filter(
-                        Question.subject_id == data.subject_id,
-                        Question.topic_id.in_(sec.topic_ids),
-                        Question.difficulty == difficulty,
-                        Question.is_active == True,
-                        Question.status == "approved",
-                        ~Question.id.in_(used_ids) if used_ids else True,
-                    )
+                    .filter(*base)
                     .order_by(func.random())
                     .limit(count)
                     .all()
@@ -448,13 +532,7 @@ def auto_generate_test(
             # Pick randomly from all matching questions
             pool = (
                 db.query(Question)
-                .filter(
-                    Question.subject_id == data.subject_id,
-                    Question.topic_id.in_(sec.topic_ids),
-                    Question.is_active == True,
-                    Question.status == "approved",
-                    ~Question.id.in_(used_ids) if used_ids else True,
-                )
+                .filter(*_base_filter())
                 .order_by(func.random())
                 .limit(sec.count)
                 .all()

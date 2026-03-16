@@ -51,7 +51,7 @@ class Subject(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     # Nullable: null = platform-level default subject, set = school-specific subject
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True, index=True)
     is_default = Column(Boolean, default=False)  # True for platform-seeded subjects
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -70,7 +70,7 @@ class Teacher(Base):
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default="standalone")  # 'super_admin', 'school_admin', 'hod', 'teacher', 'standalone'
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True, index=True)
     tier = Column(String, nullable=False, default="free")  # For standalone teachers: 'free', 'standard', 'premium'
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -88,8 +88,8 @@ class ClassGroup(Base):
     name = Column(String, nullable=False)
     academic_year = Column(String, nullable=False)
     key_stage = Column(String, nullable=True)  # 'KS1', 'KS2', 'KS3', 'KS4', 'KS5'
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
-    owner_id = Column(Integer, ForeignKey("teachers.id"), nullable=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True, index=True)
+    owner_id = Column(Integer, ForeignKey("teachers.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     school = relationship("School", back_populates="classes")
@@ -104,7 +104,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     student_code = Column(String, unique=True, index=True, nullable=False)
-    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=False)
+    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     class_group = relationship("ClassGroup", back_populates="students")
@@ -116,7 +116,7 @@ class Topic(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False, index=True)
     key_stage = Column(String, nullable=True)  # KS1/KS2/KS3/KS4
     strand = Column(String, nullable=True)  # e.g. "Number", "Algebra", "Geometry & Measures"
     order_index = Column(Integer, default=0)
@@ -130,8 +130,8 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True, index=True)
-    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
-    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False)  # denormalised
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False, index=True)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False, index=True)  # denormalised
     question_text = Column(Text, nullable=False)
     option_a = Column(String, nullable=False)
     option_b = Column(String, nullable=False)
@@ -142,8 +142,8 @@ class Question(Base):
     correct_answer = Column(String, nullable=False)  # 'A'-'E'
     difficulty = Column(String, nullable=False, default="medium")  # easy/medium/hard
     source = Column(String, nullable=False, default="system")  # system/school/teacher
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)  # NULL = system-wide
-    created_by = Column(Integer, ForeignKey("teachers.id"), nullable=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True, index=True)  # NULL = system-wide
+    created_by = Column(Integer, ForeignKey("teachers.id"), nullable=True, index=True)
     image_url = Column(String, nullable=True)
     explanation = Column(Text, nullable=True)
     distractor_rationale = Column(Text, nullable=True)  # JSON: {"B": "reason", "C": "reason", ...}
@@ -167,8 +167,8 @@ class Test(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False)
-    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False, index=True)
+    subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=True, index=True)
     test_date = Column(DateTime, nullable=True)  # When the test is/was taken
     test_file_path = Column(String, nullable=True)  # Uploaded reference paper
     is_bank_test = Column(Boolean, default=False)  # True if built from question bank
@@ -187,7 +187,7 @@ class TestSection(Base):
     __tablename__ = "test_sections"
 
     id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False, index=True)
     section_name = Column(String, nullable=False)
     num_questions = Column(Integer, nullable=False)
     num_options = Column(Integer, nullable=False, default=4)  # A-D=4, A-E=5
@@ -202,7 +202,7 @@ class AnswerKey(Base):
     __tablename__ = "answer_keys"
 
     id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False, index=True)
     question_number = Column(Integer, nullable=False)
     section_name = Column(String, nullable=False)
     correct_answer = Column(String, nullable=False)  # 'A', 'B', 'C', 'D', 'E'
@@ -214,11 +214,11 @@ class TestAssignment(Base):
     __tablename__ = "test_assignments"
 
     id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
-    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False)
-    assigned_by = Column(Integer, ForeignKey("teachers.id"), nullable=False)
-    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=True)
-    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False, index=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=False, index=True)
+    assigned_by = Column(Integer, ForeignKey("teachers.id"), nullable=False, index=True)
+    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=True, index=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=True, index=True)
     year_group = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -233,8 +233,8 @@ class ScanBatch(Base):
     __tablename__ = "scan_batches"
 
     id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
-    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False, index=True)
+    class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=True, index=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     status = Column(String, default="pending")  # pending, processing, completed, error
     total_pages = Column(Integer, default=0)
@@ -250,8 +250,8 @@ class ScanResult(Base):
     __tablename__ = "scan_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    scan_batch_id = Column(Integer, ForeignKey("scan_batches.id"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
+    scan_batch_id = Column(Integer, ForeignKey("scan_batches.id"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, index=True)
     student_code = Column(String, nullable=True)
     page_number = Column(Integer, nullable=False)
     section_name = Column(String, nullable=False)
@@ -269,10 +269,24 @@ class TestQuestion(Base):
     __tablename__ = "test_questions"
 
     id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
-    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False, index=True)
     section_name = Column(String, nullable=False, default="A")
     question_number = Column(Integer, nullable=False)  # position in test
 
     test = relationship("Test", back_populates="test_questions")
     question = relationship("Question", back_populates="test_questions")
+
+
+class QuestionFlag(Base):
+    __tablename__ = "question_flags"
+
+    id = Column(Integer, primary_key=True, index=True)
+    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False, index=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=False, index=True)
+    reason = Column(String, nullable=False, default="poor_quality")  # poor_quality/incorrect/unclear/duplicate
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    question = relationship("Question")
+    teacher = relationship("Teacher")
