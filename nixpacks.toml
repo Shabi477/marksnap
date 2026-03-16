@@ -1,11 +1,12 @@
 [phases.setup]
 nixPkgs = ["python313", "zbar", "poppler_utils", "postgresql"]
+aptPkgs = ["libzbar0"]
 
 [variables]
-LD_LIBRARY_PATH = "/root/.nix-profile/lib"
+LD_LIBRARY_PATH = "/root/.nix-profile/lib:/nix/var/nix/profiles/default/lib"
 
 [phases.build]
 cmds = ["echo 'Build complete'"]
 
 [start]
-cmd = "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+cmd = "export LD_LIBRARY_PATH=$(find /nix -name 'libzbar*' -exec dirname {} \\; 2>/dev/null | head -1):$LD_LIBRARY_PATH && cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
