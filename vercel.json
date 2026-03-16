@@ -5,8 +5,17 @@
   "installCommand": "cd frontend && npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://marksnap-production.up.railway.app/api/:path*" },
+    { "source": "/api/auth/:path*", "destination": "https://marksnap-production.up.railway.app/api/auth/:path*" },
+    { "source": "/api/classes/:path*", "destination": "https://marksnap-production.up.railway.app/api/classes/:path*" },
+    { "source": "/api/tests/:path*", "destination": "https://marksnap-production.up.railway.app/api/tests/:path*" },
+    { "source": "/api/scan/:path*", "destination": "https://marksnap-production.up.railway.app/api/scan/:path*" },
+    { "source": "/api/results/:path*", "destination": "https://marksnap-production.up.railway.app/api/results/:path*" },
+    { "source": "/api/school/:path*", "destination": "https://marksnap-production.up.railway.app/api/school/:path*" },
+    { "source": "/api/subjects/:path*", "destination": "https://marksnap-production.up.railway.app/api/subjects/:path*" },
+    { "source": "/api/topics/:path*", "destination": "https://marksnap-production.up.railway.app/api/topics/:path*" },
+    { "source": "/api/questions/:path*", "destination": "https://marksnap-production.up.railway.app/api/questions/:path*" },
+    { "source": "/api/health", "destination": "https://marksnap-production.up.railway.app/api/health" },
     { "source": "/uploads/:path*", "destination": "https://marksnap-production.up.railway.app/uploads/:path*" },
-    { "source": "/((?!api|uploads).*)", "destination": "/index.html" }
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
