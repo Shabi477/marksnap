@@ -126,7 +126,7 @@ def _draw_alignment_markers(c):
 def _draw_header(c, test, student, class_group, page_num, total_pages, y):
     """Draw header with QR code and full-width info banners."""
     content_width = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
-    qr_size = 22 * mm
+    qr_size = 30 * mm
 
     # Generate QR code image
     qr_data = {
@@ -135,7 +135,7 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
         "pg": page_num,
         "tp": total_pages,
     }
-    qr_img = generate_qr_code(qr_data, box_size=3, border=2)
+    qr_img = generate_qr_code(qr_data, box_size=5, border=2)
 
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         qr_img.save(tmp, format="PNG")

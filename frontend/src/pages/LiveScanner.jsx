@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const SCAN_INTERVAL = 150; // ms between QR detection attempts
-const QR_STABLE_COUNT = 3; // frames QR must be stable before capture
+const SCAN_INTERVAL = 200; // ms between QR detection attempts
+const QR_STABLE_COUNT = 2; // frames QR must be stable before capture
 const COOLDOWN_MS = 2000; // pause after processing before next scan
 
 export default function LiveScanner() {
@@ -119,7 +119,7 @@ export default function LiveScanner() {
     if (!canvas) { setProcessing(false); return; }
 
     try {
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
       if (!blob) { setProcessing(false); return; }
 
       const res = await scanAPI.scanLive(testId, blob);
@@ -174,7 +174,7 @@ export default function LiveScanner() {
       if (!frame) return;
 
       const imageData = frame.ctx.getImageData(0, 0, frame.width, frame.height);
-      const code = jsQR(imageData.data, frame.width, frame.height, { inversionAttempts: 'dontInvert' });
+      const code = jsQR(imageData.data, frame.width, frame.height, { inversionAttempts: 'attemptBoth' });
 
       if (code && code.data) {
         if (code.data === lastQrRef.current) {
@@ -232,8 +232,8 @@ export default function LiveScanner() {
       </div>
 
       {/* Camera view */}
-      <div className="card p-0 overflow-hidden relative">
-        <div className="relative bg-gray-900 aspect-[3/4] max-h-[75vh] flex items-center justify-center">
+      <div className="overflow-hidden relative rounded-xl">
+        <div className="relative bg-gray-900 aspect-[3/4] max-h-[85vh] flex items-center justify-center">
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
@@ -292,13 +292,23 @@ export default function LiveScanner() {
             </div>
           )}
 
-          {/* Scanning guide overlay */}
+          {/* Scanning guide overlay + capture button */}
           {cameraActive && !processing && !lastResult && (
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-8 border-2 border-white/30 rounded-xl" />
-              <div className="absolute bottom-4 left-0 right-0 text-center">
-                <span className="bg-black/50 text-white text-sm px-4 py-2 rounded-full">
-                  Frame the entire answer sheet (QR code + bubbles)
+            <div className="absolute inset-0 flex flex-col">
+              <div className="flex-1 pointer-events-none">
+                <div className="absolute inset-2 border-2 border-white/40 rounded-lg" />
+              </div>
+              <div className="pb-4 pt-1 flex flex-col items-center gap-1 pointer-events-auto">
+                <button
+                  onClick={processSheet}
+                  disabled={processing}
+                  className="w-18 h-18 rounded-full bg-white shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-brand-500"
+                  style={{ width: 72, height: 72 }}
+                >
+                  <Camera className="w-9 h-9 text-brand-600" />
+                </button>
+                <span className="bg-black/60 text-white text-xs px-3 py-1 rounded-full">
+                  Frame the whole sheet, then tap to capture
                 </span>
               </div>
             </div>
@@ -307,24 +317,13 @@ export default function LiveScanner() {
 
         {/* Camera controls */}
         {cameraActive && (
-          <div className="flex items-center justify-center gap-4 p-3 bg-gray-50 border-t">
-            <button
-              onClick={() => setPaused(!paused)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                paused
-                  ? 'bg-brand-500 text-white hover:bg-brand-600'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-              {paused ? 'Resume' : 'Pause'}
-            </button>
+          <div className="flex items-center justify-center gap-3 p-3 bg-gray-50 border-t">
             <button
               onClick={stopCamera}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
             >
               <CameraOff className="w-4 h-4" />
-              Stop Camera
+              Stop
             </button>
           </div>
         )}
