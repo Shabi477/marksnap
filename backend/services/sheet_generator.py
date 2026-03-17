@@ -16,8 +16,10 @@ MARGIN_RIGHT = 15 * mm
 MARGIN_BOTTOM = 14 * mm
 
 BUBBLE_RADIUS = 4 * mm
-BUBBLE_SPACING_X = 12 * mm
-BUBBLE_SPACING_Y = 11 * mm
+BUBBLE_WIDTH = 5.5 * mm    # oval width (horizontal)
+BUBBLE_HEIGHT = 7 * mm     # oval height (vertical) — taller than wide like QuickKey
+BUBBLE_SPACING_X = 9.5 * mm
+BUBBLE_SPACING_Y = 9 * mm
 QUESTION_NUM_WIDTH = 14 * mm
 
 BRAND_COLOR = HexColor("#0e7490")  # Dark blue-teal
@@ -27,9 +29,10 @@ BRAND_COLOR_DARK = HexColor("#164e63")
 ALIGNMENT_MARKER_SIZE = 5 * mm
 
 # Student number bubble grid constants
-STUDENT_NUM_BUBBLE_RADIUS = 3.5 * mm
-STUDENT_NUM_SPACING_X = 9.5 * mm   # horizontal spacing between digit bubbles
-STUDENT_NUM_ROW_SPACING = 9 * mm    # vertical spacing between digit rows
+STUDENT_NUM_BUBBLE_W = 5 * mm
+STUDENT_NUM_BUBBLE_H = 6.5 * mm
+STUDENT_NUM_SPACING_X = 8.5 * mm   # horizontal spacing between digit bubbles
+STUDENT_NUM_ROW_SPACING = 8.5 * mm # vertical spacing between digit rows
 
 OPTIONS = ["A", "B", "C", "D", "E"]
 
@@ -245,20 +248,26 @@ def _draw_student_number_grid(c, x_start, y_start):
         c.setFillColor(HexColor("#64748b"))
         c.drawRightString(x_start - 3 * mm, row_y - 1.5 * mm, label)
 
-        # Digit bubbles
+        # Digit bubbles (oval)
         for i, digit in enumerate(digits):
-            bx = x_start + i * STUDENT_NUM_SPACING_X + STUDENT_NUM_BUBBLE_RADIUS
+            bx = x_start + i * STUDENT_NUM_SPACING_X
             by = row_y
 
-            c.setStrokeColor(HexColor("#4b5563"))
-            c.setFillColor(white)
-            c.setLineWidth(1.2)
-            c.circle(bx, by, STUDENT_NUM_BUBBLE_RADIUS, fill=1, stroke=1)
+            _draw_oval_bubble(c, bx, by, STUDENT_NUM_BUBBLE_W, STUDENT_NUM_BUBBLE_H)
 
             # Digit label inside bubble
-            c.setFont("Helvetica-Bold", 8)
+            c.setFont("Helvetica-Bold", 7)
             c.setFillColor(HexColor("#9ca3af"))
             c.drawCentredString(bx, by - 2 * mm, digit)
+
+
+def _draw_oval_bubble(c, cx, cy, w, h):
+    """Draw a single oval bubble centered at (cx, cy) with width w and height h."""
+    c.setStrokeColor(HexColor("#4b5563"))
+    c.setFillColor(white)
+    c.setLineWidth(0.8)
+    # ellipse takes bounding rect: (x1, y1, x2, y2)
+    c.ellipse(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2, fill=1, stroke=1)
 
 
 def _draw_section(c, section, y):
@@ -287,7 +296,7 @@ def _draw_section(c, section, y):
     start_q = section.start_question
 
     # First determine how many columns fit across the page
-    bubble_block_width = QUESTION_NUM_WIDTH + section.num_options * BUBBLE_SPACING_X + 5 * mm
+    bubble_block_width = QUESTION_NUM_WIDTH + section.num_options * BUBBLE_SPACING_X + 3 * mm
     max_cols = max(1, int(content_width / bubble_block_width))
 
     # Use as many columns as possible to spread questions across the page
@@ -302,7 +311,7 @@ def _draw_section(c, section, y):
     for col in range(num_columns):
         x_base = MARGIN_LEFT + col * col_width
         for i in range(section.num_options):
-            opt_x = x_base + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X + BUBBLE_RADIUS
+            opt_x = x_base + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X
             c.drawCentredString(opt_x, y + 1 * mm, OPTIONS[i])
     y -= 4 * mm
 
@@ -323,26 +332,23 @@ def _draw_section(c, section, y):
         if row % 2 == 0:
             c.setFillColor(HexColor("#ecfeff"))
             row_width = QUESTION_NUM_WIDTH + section.num_options * BUBBLE_SPACING_X + 2 * mm
-            c.rect(x_base, q_y - BUBBLE_RADIUS - 1 * mm, row_width,
-                   BUBBLE_RADIUS * 2 + 2 * mm, fill=1, stroke=0)
+            c.rect(x_base, q_y - BUBBLE_HEIGHT / 2 - 0.5 * mm, row_width,
+                   BUBBLE_HEIGHT + 1 * mm, fill=1, stroke=0)
 
         # Question number
-        c.setFont("Helvetica-Bold", 11)
+        c.setFont("Helvetica-Bold", 10)
         c.setFillColor(HexColor("#1f2937"))
-        c.drawRightString(x_base + QUESTION_NUM_WIDTH - 2 * mm, q_y - BUBBLE_RADIUS / 2, f"{q_num}.")
+        c.drawRightString(x_base + QUESTION_NUM_WIDTH - 2 * mm, q_y - 2 * mm, f"{q_num}.")
 
-        # Bubbles
+        # Bubbles (oval)
         for i in range(section.num_options):
-            bx = x_base + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X + BUBBLE_RADIUS
+            bx = x_base + QUESTION_NUM_WIDTH + i * BUBBLE_SPACING_X
             by = q_y
 
-            c.setStrokeColor(HexColor("#4b5563"))
-            c.setFillColor(white)
-            c.setLineWidth(1.2)
-            c.circle(bx, by, BUBBLE_RADIUS, fill=1, stroke=1)
+            _draw_oval_bubble(c, bx, by, BUBBLE_WIDTH, BUBBLE_HEIGHT)
 
             # Letter inside bubble
-            c.setFont("Helvetica-Bold", 8)
+            c.setFont("Helvetica-Bold", 7)
             c.setFillColor(HexColor("#9ca3af"))
             c.drawCentredString(bx, by - 2 * mm, OPTIONS[i])
 
