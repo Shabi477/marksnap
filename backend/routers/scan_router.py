@@ -10,6 +10,9 @@ import os
 import uuid
 import shutil
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 REVIEW_CONFIDENCE_THRESHOLD = 0.5
 
@@ -358,6 +361,13 @@ async def live_scan(
 
         results = process_scan_batch([file_path], test, answer_key_map, db, frontend_qr=frontend_qr)
 
+        if not results:
+            logger.warning(f"No answers detected for test {test_id}")
+            raise HTTPException(
+                status_code=422,
+                detail="No answers detected. Make sure the full answer sheet is visible and well-lit."
+            )
+
         # Build response
         student_code = None
         student_name = None
@@ -428,6 +438,7 @@ async def live_scan(
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"Live scan failed for test {test_id}")
         raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
     finally:
         if os.path.exists(file_path):

@@ -3,6 +3,9 @@ import numpy as np
 from PIL import Image
 from services.qr_handler import read_qr_code
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to import pdf2image — requires poppler installed
 try:
@@ -47,21 +50,22 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
 
     # Try backend QR reading first, fall back to frontend-provided QR data
     qr_data = read_qr_code(pil_image)
-    if not qr_data and frontend_qr:
+    if qr_data:
+        logger.info(f"Backend QR decoded: {qr_data}")
+    elif frontend_qr:
         qr_data = frontend_qr
-    student_code = qr_data.get("sid") if qr_data else None
-    page_number = qr_data.get("pg", 1) if qr_data else 1
+        logger.info(f"Using frontend QR data: {qr_data}")
+    else:
+        logger.warning("No QR data from backend or frontend")
 
-    # Look up student if we got a code
-    student_id = None
-    if student_code:
-        from models import Student
-        student = db.query(Student).filter(Student.student_code == student_code).first()
-        if student:
-            student_id = student.id
+    # QR now contains tid, cid, pg, tp (no sid)
+    class_id = qr_data.get("cid") if qr_data else None
+    page_number = qr_data.get("pg", 1) if qr_data else 1
 
     # Convert to OpenCV format
     cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+    h, w = cv_image.shape[:2]
+    logger.info(f"Image dimensions: {w}x{h}")
 
     # Detect alignment markers and correct perspective
     cv_image = _correct_perspective(cv_image)
@@ -73,22 +77,55 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
         blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2
     )
 
-    # Find all contours (potential bubbles)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    h, w = cv_image.shape[:2]
+
+    # Read student number from bubble grid in the header area (top ~28% of page)
+    student_number = _read_student_number(thresh, h, w)
+    logger.info(f"Student number read from bubbles: {student_number}")
+
+    # Look up student by class_number within the class
+    student_id = None
+    student_code = None
+    if student_number and class_id:
+        from models import Student
+        student = db.query(Student).filter(
+            Student.class_id == class_id,
+            Student.class_number == student_number,
+        ).first()
+        if student:
+            student_id = student.id
+            student_code = student.student_code
+            logger.info(f"Student matched: {student.name} (id={student.id}, class_number={student_number})")
+        else:
+            logger.warning(f"No student with class_number={student_number} in class {class_id}")
+
+    # Find all contours (potential bubbles) — only in the answer area (below top 28%)
+    answer_region_top = int(h * 0.28)
+    answer_thresh = thresh[answer_region_top:, :]
+    contours, _ = cv2.findContours(answer_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    logger.info(f"Total contours found in answer region: {len(contours)}")
+
+    # Offset contour Y coordinates back to full-image coordinates
+    for cnt in contours:
+        cnt[:, :, 1] += answer_region_top
 
     # Filter contours to find bubbles based on size and circularity
     bubble_contours = _filter_bubble_contours(contours, cv_image.shape)
+    logger.info(f"Bubble contours after filtering: {len(bubble_contours)}")
 
     if not bubble_contours:
+        logger.warning("No bubbles detected — returning empty results")
         return results
 
     # Group bubbles into rows (questions) and columns (options)
     bubble_groups = _group_bubbles(bubble_contours)
+    logger.info(f"Question rows detected: {len(bubble_groups)}")
 
     # Determine which sections are on this page
     page_sections = [s for s in test.sections if s.page_number == page_number]
     if not page_sections:
-        page_sections = test.sections  # Fallback: try all sections
+        logger.warning(f"No sections found for page {page_number}, using all sections as fallback")
+        page_sections = test.sections
 
     # Analyze each question row
     for q_idx, (question_num, bubbles) in enumerate(sorted(bubble_groups.items())):
@@ -114,7 +151,120 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
             "confidence": confidence,
         })
 
+    logger.info(f"Processed {len(results)} question results for page {page_number}")
     return results
+
+
+def _read_student_number(thresh_image, img_h, img_w):
+    """
+    Read the 2-digit student number from the bubble grid in the header area.
+    The grid has two rows (Tens and Units), each with 10 bubbles (digits 0-9).
+    Located in the top ~15%-27% of the page vertically, ~15%-65% horizontally.
+    Returns the student number as an integer, or None if unreadable.
+    """
+    # Crop the student number region from the thresholded image
+    y_top = int(img_h * 0.15)
+    y_bottom = int(img_h * 0.27)
+    x_left = int(img_w * 0.12)
+    x_right = int(img_w * 0.70)
+
+    region = thresh_image[y_top:y_bottom, x_left:x_right]
+    if region.size == 0:
+        logger.warning("Student number region is empty")
+        return None
+
+    # Find bubbles in this region
+    contours, _ = cv2.findContours(region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    rh, rw = region.shape[:2]
+    min_area = (rh * rw) * 0.002
+    max_area = (rh * rw) * 0.06
+
+    bubbles = []
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < min_area or area > max_area:
+            continue
+        peri = cv2.arcLength(cnt, True)
+        if peri == 0:
+            continue
+        circularity = 4 * np.pi * area / (peri * peri)
+        if circularity > 0.4:
+            x, y, bw, bh = cv2.boundingRect(cnt)
+            aspect_ratio = bw / float(bh) if bh > 0 else 0
+            if 0.5 < aspect_ratio < 2.0:
+                bubbles.append({
+                    "contour": cnt,
+                    "x": x + bw // 2,
+                    "y": y + bh // 2,
+                    "w": bw,
+                    "h": bh,
+                    "area": area,
+                })
+
+    logger.info(f"Student number region: found {len(bubbles)} bubble candidates")
+
+    if len(bubbles) < 10:
+        logger.warning(f"Not enough bubbles for student number grid (need >=10, found {len(bubbles)})")
+        return None
+
+    # Group into rows by Y position
+    bubbles_sorted = sorted(bubbles, key=lambda b: (b["y"], b["x"]))
+    avg_h = np.mean([b["h"] for b in bubbles_sorted])
+    y_tolerance = avg_h * 0.8
+
+    rows = []
+    current_row = [bubbles_sorted[0]]
+    for b in bubbles_sorted[1:]:
+        if abs(b["y"] - current_row[-1]["y"]) < y_tolerance:
+            current_row.append(b)
+        else:
+            rows.append(sorted(current_row, key=lambda b: b["x"]))
+            current_row = [b]
+    rows.append(sorted(current_row, key=lambda b: b["x"]))
+
+    # Keep only rows with ~10 bubbles (the digit rows)
+    digit_rows = [r for r in rows if 8 <= len(r) <= 12]
+    logger.info(f"Student number digit rows found: {len(digit_rows)} (sizes: {[len(r) for r in rows]})")
+
+    if len(digit_rows) < 2:
+        logger.warning("Could not find 2 digit rows for student number")
+        return None
+
+    # Take the first 2 qualifying rows (tens, then units)
+    digit_rows = digit_rows[:2]
+
+    # Read each row — find which bubble has the highest fill ratio
+    digits = []
+    for row in digit_rows:
+        fill_ratios = []
+        for b in row:
+            mask = np.zeros(region.shape, dtype=np.uint8)
+            cv2.circle(mask, (b["x"], b["y"]), b["w"] // 2, 255, -1)
+            filled = cv2.bitwise_and(region, mask)
+            total_pixels = cv2.countNonZero(mask)
+            filled_pixels = cv2.countNonZero(filled)
+            ratio = filled_pixels / total_pixels if total_pixels > 0 else 0
+            fill_ratios.append(ratio)
+
+        max_ratio = max(fill_ratios)
+        if max_ratio < 0.30:
+            logger.warning(f"No bubble filled enough in student number row (max fill: {max_ratio:.2f})")
+            digits.append(0)
+            continue
+
+        max_idx = fill_ratios.index(max_ratio)
+        # Map index to digit (0-9)
+        digit = min(max_idx, 9)
+        digits.append(digit)
+        logger.info(f"Student number digit: {digit} (fill ratio: {max_ratio:.2f})")
+
+    student_number = digits[0] * 10 + digits[1]
+    if student_number == 0:
+        logger.warning("Student number is 0 — likely nothing was shaded")
+        return None
+
+    return student_number
 
 
 def _correct_perspective(image):
@@ -126,11 +276,16 @@ def _correct_perspective(image):
 
     # Find square-ish contours in the corners (alignment markers)
     h, w = image.shape[:2]
+    # Scale area thresholds relative to image size
+    # A 5mm marker on A4 (210mm wide) takes ~2.4% of width → (0.024*w)^2 ≈ area
+    image_area = h * w
+    min_marker_area = image_area * 0.00002   # min ~0.002% of image
+    max_marker_area = image_area * 0.002     # max ~0.2% of image
     markers = []
 
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area < 100 or area > 5000:
+        if area < min_marker_area or area > max_marker_area:
             continue
 
         peri = cv2.arcLength(cnt, True)
@@ -143,6 +298,8 @@ def _correct_perspective(image):
                 cx = x + bw // 2
                 cy = y + bh // 2
                 markers.append((cx, cy))
+
+    logger.info(f"Alignment markers found: {len(markers)} (need 4, area range: {min_marker_area:.0f}-{max_marker_area:.0f})")
 
     if len(markers) >= 4:
         # Sort markers into corners
@@ -160,6 +317,9 @@ def _correct_perspective(image):
 
         matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
         image = cv2.warpPerspective(image, matrix, (w, h))
+        logger.info("Perspective correction applied")
+    else:
+        logger.warning("Not enough alignment markers for perspective correction")
 
     return image
 
@@ -167,8 +327,8 @@ def _correct_perspective(image):
 def _filter_bubble_contours(contours, image_shape):
     """Filter contours to find likely bubbles based on size and shape."""
     h, w = image_shape[:2]
-    min_area = (w * h) * 0.0001  # Minimum bubble area relative to image
-    max_area = (w * h) * 0.005
+    min_area = (w * h) * 0.00008  # Slightly more lenient minimum
+    max_area = (w * h) * 0.008    # Slightly more lenient maximum
 
     bubbles = []
     for cnt in contours:
@@ -181,10 +341,10 @@ def _filter_bubble_contours(contours, image_shape):
             continue
         circularity = 4 * np.pi * area / (peri * peri)
 
-        if circularity > 0.5:  # Reasonably circular
+        if circularity > 0.4:  # More lenient circularity (was 0.5)
             x, y, bw, bh = cv2.boundingRect(cnt)
             aspect_ratio = bw / float(bh) if bh > 0 else 0
-            if 0.6 < aspect_ratio < 1.6:
+            if 0.5 < aspect_ratio < 2.0:  # More lenient aspect ratio
                 bubbles.append({
                     "contour": cnt,
                     "x": x + bw // 2,
@@ -194,6 +354,7 @@ def _filter_bubble_contours(contours, image_shape):
                     "area": area,
                 })
 
+    logger.debug(f"Bubble filter: {len(bubbles)} passed (area range: {min_area:.0f}-{max_area:.0f})")
     return bubbles
 
 

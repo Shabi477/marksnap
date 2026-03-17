@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import func as db_func
 from database import get_db
 from models import Teacher, ClassGroup, Student
 from schemas import ClassCreate, ClassResponse, StudentCreate, StudentResponse
@@ -108,7 +109,7 @@ def list_students(
     return [
         StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_id=s.class_id, class_name=class_group.name,
+            class_number=s.class_number, class_id=s.class_id, class_name=class_group.name,
         )
         for s in students
     ]
@@ -126,15 +127,21 @@ def add_student(
         raise HTTPException(status_code=404, detail="Class not found")
 
     student_code = data.student_code or f"S{uuid.uuid4().hex[:8].upper()}"
+    # Auto-assign class_number if not provided
+    if data.class_number:
+        class_number = data.class_number
+    else:
+        max_num = db.query(db_func.max(Student.class_number)).filter(Student.class_id == class_id).scalar()
+        class_number = (max_num or 0) + 1
     student = Student(
-        name=data.name, student_code=student_code, class_id=class_id
+        name=data.name, student_code=student_code, class_id=class_id, class_number=class_number
     )
     db.add(student)
     db.commit()
     db.refresh(student)
     return StudentResponse(
         id=student.id, name=student.name, student_code=student.student_code,
-        class_id=student.class_id, class_name=class_group.name,
+        class_number=student.class_number, class_id=student.class_id, class_name=class_group.name,
     )
 
 
@@ -179,6 +186,9 @@ def upload_students_csv(
         if existing:
             continue
         student = Student(name=name, student_code=student_code, class_id=class_id)
+        # Auto-assign class_number
+        max_num = db.query(db_func.max(Student.class_number)).filter(Student.class_id == class_id).scalar()
+        student.class_number = (max_num or 0) + 1
         db.add(student)
         added += 1
 
@@ -208,7 +218,7 @@ def search_students_in_my_classes(
     return [
         StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
+            class_number=s.class_number, class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
         )
         for s in students
     ]

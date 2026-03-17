@@ -104,6 +104,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     student_code = Column(String, unique=True, index=True, nullable=False)
+    class_number = Column(Integer, nullable=True)  # 1-based number within class (for bubble sheets)
     class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
-from models import Teacher, Test, TestSection, AnswerKey, Student, ClassGroup, TestAssignment, Subject, Question, TestQuestion, teacher_classes, QuestionFlag
+from models import Teacher, Test, TestSection, AnswerKey, ClassGroup, TestAssignment, Subject, Question, TestQuestion, teacher_classes, QuestionFlag
 from schemas import TestCreate, TestResponse, SectionConfig, AnswerKeyCreate, AnswerKeyEntry, TestGenerate, TestAutoGenerate
 from auth import get_current_teacher
 from routers.classes_router import _can_access_class
@@ -238,11 +238,7 @@ def download_answer_sheets(
     if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
 
-    students = db.query(Student).filter(Student.class_id == class_id).all()
-    if not students:
-        raise HTTPException(status_code=400, detail="No students in this class")
-
-    pdf_buffer = generate_answer_sheets(test, students, class_group)
+    pdf_buffer = generate_answer_sheets(test, class_group)
 
     return StreamingResponse(
         io.BytesIO(pdf_buffer),

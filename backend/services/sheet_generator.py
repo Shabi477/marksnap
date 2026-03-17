@@ -26,6 +26,11 @@ BRAND_COLOR_DARK = HexColor("#164e63")
 
 ALIGNMENT_MARKER_SIZE = 5 * mm
 
+# Student number bubble grid constants
+STUDENT_NUM_BUBBLE_RADIUS = 3.5 * mm
+STUDENT_NUM_SPACING_X = 9.5 * mm   # horizontal spacing between digit bubbles
+STUDENT_NUM_ROW_SPACING = 10 * mm  # vertical spacing between tens and units rows
+
 OPTIONS = ["A", "B", "C", "D", "E"]
 
 
@@ -61,20 +66,19 @@ def _draw_logo_icon(c, x, y, size):
     c.line(x + 20 * s, y + size - 16 * s, x + 24 * s, y + size - 16 * s)
 
 
-def generate_answer_sheets(test, students, class_group) -> bytes:
-    """Generate a PDF with answer sheets for all students."""
+def generate_answer_sheets(test, class_group) -> bytes:
+    """Generate a single-copy answer sheet template. Teacher prints as many copies as needed."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
 
-    for student in students:
-        _draw_student_sheet(c, test, student, class_group)
+    _draw_sheet(c, test, class_group)
 
     c.save()
     return buffer.getvalue()
 
 
-def _draw_student_sheet(c, test, student, class_group):
-    """Draw answer sheet pages for a single student."""
+def _draw_sheet(c, test, class_group):
+    """Draw answer sheet pages for the test (one set of pages)."""
     pages = {}
     for section in test.sections:
         pg = section.page_number
@@ -86,18 +90,18 @@ def _draw_student_sheet(c, test, student, class_group):
 
     for page_num in sorted(pages.keys()):
         sections = pages[page_num]
-        _draw_page(c, test, student, class_group, sections, page_num, total_pages)
+        _draw_page(c, test, class_group, sections, page_num, total_pages)
         c.showPage()
 
 
-def _draw_page(c, test, student, class_group, sections, page_num, total_pages):
+def _draw_page(c, test, class_group, sections, page_num, total_pages):
     """Draw a single page of the answer sheet."""
     y = PAGE_HEIGHT - MARGIN_TOP
 
     _draw_alignment_markers(c)
 
     # Compact header with QR code inline
-    y = _draw_header(c, test, student, class_group, page_num, total_pages, y)
+    y = _draw_header(c, test, class_group, page_num, total_pages, y)
 
     # Sections with bubbles
     for section in sections:
@@ -123,15 +127,15 @@ def _draw_alignment_markers(c):
         c.rect(x, y - ALIGNMENT_MARKER_SIZE, ALIGNMENT_MARKER_SIZE, ALIGNMENT_MARKER_SIZE, fill=1, stroke=0)
 
 
-def _draw_header(c, test, student, class_group, page_num, total_pages, y):
-    """Draw header with QR code and full-width info banners."""
+def _draw_header(c, test, class_group, page_num, total_pages, y):
+    """Draw header with QR code, student number bubble grid, and info."""
     content_width = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
     qr_size = 30 * mm
 
-    # Generate QR code image
+    # Generate QR code image — encodes test & class info only (no student)
     qr_data = {
-        "sid": student.student_code,
         "tid": test.id,
+        "cid": class_group.id,
         "pg": page_num,
         "tp": total_pages,
     }
@@ -143,8 +147,8 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
 
     # QR code sits to the right of the brand bar
     qr_x = PAGE_WIDTH - MARGIN_RIGHT - qr_size
-    qr_total = qr_size + 3 * mm  # QR + border padding
-    bar_width = qr_x - MARGIN_LEFT - 4 * mm  # brand bar stops before QR
+    qr_total = qr_size + 3 * mm
+    bar_width = qr_x - MARGIN_LEFT - 4 * mm
 
     # Brand bar (rounded, stops before QR)
     bar_height = 17 * mm
@@ -176,22 +180,38 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
     # Move y past whichever is taller (QR or brand bar)
     y = min(bar_top - bar_height, qr_y - 1.5 * mm) - 4 * mm
 
-    # Student info box (full width, rounded, below QR and brand bar)
-    info_box_height = 20 * mm
+    # Info + student number box (full width, rounded)
+    info_box_height = 36 * mm
     c.setFillColor(BRAND_COLOR_LIGHT)
     c.setStrokeColor(HexColor("#a5f3fc"))
     c.setLineWidth(0.8)
     c.roundRect(MARGIN_LEFT, y - info_box_height, content_width, info_box_height, 3 * mm, fill=1, stroke=1)
 
+    # Row 1: Test name + Class name
     c.setFillColor(HexColor("#0c4a6e"))
-    c.setFont("Helvetica-Bold", 12)
-    row1_y = y - 7 * mm
-    c.drawString(MARGIN_LEFT + 5 * mm, row1_y, f"Name: {student.name}")
-    c.drawString(MARGIN_LEFT + content_width / 2, row1_y, f"ID: {student.student_code}")
-    row2_y = row1_y - 7 * mm
-    c.drawString(MARGIN_LEFT + 5 * mm, row2_y, f"Class: {class_group.name}")
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(MARGIN_LEFT + content_width / 2, row2_y, f"Test: {test.name}")
+    row1_y = y - 7 * mm
+    c.drawString(MARGIN_LEFT + 5 * mm, row1_y, f"Test: {test.name}")
+    c.drawString(MARGIN_LEFT + content_width / 2, row1_y, f"Class: {class_group.name}")
+
+    # Row 2-3: Student number bubble grid
+    grid_label_y = row1_y - 10 * mm
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColor(HexColor("#0c4a6e"))
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y + 3 * mm, "Student")
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 4 * mm, "No.")
+
+    _draw_student_number_grid(c, MARGIN_LEFT + 28 * mm, grid_label_y + 5.5 * mm)
+
+    # Row 4: Name write-in line
+    name_y = grid_label_y - 14 * mm
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColor(HexColor("#0c4a6e"))
+    c.drawString(MARGIN_LEFT + 5 * mm, name_y, "Name:")
+    c.setStrokeColor(HexColor("#94a3b8"))
+    c.setLineWidth(0.5)
+    c.line(MARGIN_LEFT + 22 * mm, name_y - 1 * mm,
+           MARGIN_LEFT + content_width - 5 * mm, name_y - 1 * mm)
 
     y -= info_box_height + 4 * mm
 
@@ -211,6 +231,34 @@ def _draw_header(c, test, student, class_group, page_num, total_pages, y):
     y -= instr_height + 2 * mm
 
     return y
+
+
+def _draw_student_number_grid(c, x_start, y_start):
+    """Draw the 2-row student number bubble grid (Tens and Units, each 0-9)."""
+    digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+    for row_idx, label in enumerate(["Tens", "Units"]):
+        row_y = y_start - row_idx * STUDENT_NUM_ROW_SPACING
+
+        # Row label
+        c.setFont("Helvetica", 8)
+        c.setFillColor(HexColor("#64748b"))
+        c.drawRightString(x_start - 3 * mm, row_y - 1.5 * mm, label)
+
+        # Digit bubbles
+        for i, digit in enumerate(digits):
+            bx = x_start + i * STUDENT_NUM_SPACING_X + STUDENT_NUM_BUBBLE_RADIUS
+            by = row_y
+
+            c.setStrokeColor(HexColor("#4b5563"))
+            c.setFillColor(white)
+            c.setLineWidth(1.2)
+            c.circle(bx, by, STUDENT_NUM_BUBBLE_RADIUS, fill=1, stroke=1)
+
+            # Digit label inside bubble
+            c.setFont("Helvetica-Bold", 8)
+            c.setFillColor(HexColor("#9ca3af"))
+            c.drawCentredString(bx, by - 2 * mm, digit)
 
 
 def _draw_section(c, section, y):

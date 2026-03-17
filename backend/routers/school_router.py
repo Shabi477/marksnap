@@ -311,7 +311,7 @@ def search_students(
     return [
         StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
+            class_number=s.class_number, class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
         )
         for s in students
     ]
