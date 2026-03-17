@@ -84,7 +84,21 @@ export default function Dashboard() {
             </div>
             <div className="flex-1">
               <p className="font-semibold text-gray-900">Scan Answers</p>
-              <p className="text-sm text-gray-500">Select a test first</p>
+              {tests.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {tests.slice(0, 3).map((t) => (
+                    <Link
+                      key={t.id}
+                      to={`/live-scan/${t.id}`}
+                      className="text-xs px-2 py-0.5 bg-brand-50 text-brand-700 rounded hover:bg-brand-100 transition-colors"
+                    >
+                      {t.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Create a test first</p>
+              )}
             </div>
           </div>
         </div>

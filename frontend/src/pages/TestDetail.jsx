@@ -4,6 +4,7 @@ import { testsAPI, classesAPI } from '../services/api';
 import Spinner from '../components/Spinner';
 import {
   ArrowLeft, Download, ScanLine, BarChart3, Save, FileText, CheckCircle2, Camera,
+  ClipboardList, Printer, BookOpen,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -116,6 +117,20 @@ export default function TestDetail() {
 
   const totalQuestions = test.sections?.reduce((s, sec) => s + sec.num_questions, 0) || 0;
   const filledAnswers = answerKey.filter((a) => a.correct_answer).length;
+  const answerKeyComplete = filledAnswers === totalQuestions && totalQuestions > 0;
+  const classSelected = !!selectedClass;
+
+  // Workflow steps
+  const steps = [
+    { label: 'Set Answer Key', icon: ClipboardList, done: answerKeyComplete, hint: 'Click the bubbles below to mark correct answers' },
+    { label: 'Select Class', icon: BookOpen, done: classSelected, hint: 'Choose which class to generate sheets for' },
+    { label: 'Download & Print Sheets', icon: Printer, done: false, hint: 'Download PDF answer sheets for your students' },
+    { label: 'Scan Completed Sheets', icon: Camera, done: false, hint: 'Use your phone camera to scan filled-in sheets' },
+    { label: 'View Results', icon: BarChart3, done: false, hint: 'See scores and analytics' },
+  ];
+
+  // Determine current active step
+  const currentStep = !answerKeyComplete ? 0 : !classSelected ? 1 : 2;
 
   return (
     <div className="space-y-6">
@@ -128,6 +143,41 @@ export default function TestDetail() {
           <p className="page-subtitle">
             {test.sections?.length} section(s) • {totalQuestions} questions
           </p>
+        </div>
+      </div>
+
+      {/* Workflow guide */}
+      <div className="card">
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">How it works</h2>
+        <div className="flex flex-col sm:flex-row gap-1 sm:gap-0">
+          {steps.map((step, i) => {
+            const StepIcon = step.icon;
+            const isActive = i === currentStep;
+            const isDone = step.done;
+            const isPast = i < currentStep;
+            return (
+              <div key={i} className="flex-1 flex items-center">
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full transition-colors ${
+                  isDone || isPast ? 'bg-emerald-50' : isActive ? 'bg-brand-50 ring-1 ring-brand-200' : 'bg-gray-50'
+                }`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                    isDone || isPast ? 'bg-emerald-500 text-white' : isActive ? 'bg-brand-500 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {isDone || isPast ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-semibold truncate ${
+                      isDone || isPast ? 'text-emerald-700' : isActive ? 'text-brand-700' : 'text-gray-500'
+                    }`}>{step.label}</p>
+                    {isActive && <p className="text-[10px] text-gray-500 truncate">{step.hint}</p>}
+                  </div>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="hidden sm:block w-4 h-0.5 bg-gray-200 shrink-0"></div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

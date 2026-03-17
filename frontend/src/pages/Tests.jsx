@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { testsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/Spinner';
-import { FileText, Plus, Trash2, ArrowRight, BookOpen } from 'lucide-react';
+import { FileText, Plus, Trash2, ArrowRight, BookOpen, Camera, Download, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Tests() {
+  const { teacher } = useAuth();
   const [tests, setTests] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [testName, setTestName] = useState('');
@@ -75,27 +77,33 @@ export default function Tests() {
     );
   }
 
+  const canCreate = !['teacher', 'sendco'].includes(teacher?.role);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Tests</h1>
-          <p className="page-subtitle">Create tests and generate answer sheets</p>
+          <p className="page-subtitle">
+            {canCreate ? 'Create tests and generate answer sheets' : 'View tests, download sheets and scan answers'}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Link to="/tests/build" className="btn-secondary flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
-            Build from Bank
-          </Link>
-          <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            New Test
-          </button>
-        </div>
+        {canCreate && (
+          <div className="flex gap-2">
+            <Link to="/tests/build" className="btn-secondary flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Build from Bank
+            </Link>
+            <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              New Test
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Create form */}
-      {showForm && (
+      {canCreate && showForm && (
         <form onSubmit={handleCreate} className="card space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Test Name</label>
@@ -215,14 +223,30 @@ export default function Tests() {
                       </div>
                     </div>
                   </Link>
-                  <button
-                    onClick={() => handleDelete(test.id, test.name)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canCreate && (
+                    <button
+                      onClick={() => handleDelete(test.id, test.name)}
+                      className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <Link
+                    to={`/live-scan/${test.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Scan
+                  </Link>
+                  <Link
+                    to={`/results/${test.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5" /> Results
+                  </Link>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-gray-400">
                     {new Date(test.created_at).toLocaleDateString()}
                   </p>

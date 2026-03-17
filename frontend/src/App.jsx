@@ -54,7 +54,7 @@ function AppRoutes() {
         <Route path="classes/:classId" element={<ClassDetail />} />
         <Route path="tests" element={<Tests />} />
         <Route path="tests/build" element={<TestBuilder />} />
-        <Route path="assessments" element={<Assessments />} />
+        <Route path="assessments" element={<Navigate to="/tests" replace />} />
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route path="scan/:testId" element={<ScanUpload />} />
         <Route path="live-scan/:testId" element={<LiveScanner />} />
