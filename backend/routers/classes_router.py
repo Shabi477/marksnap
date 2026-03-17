@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func as db_func
 from database import get_db
-from models import Teacher, ClassGroup, Student
+from models import Teacher, ClassGroup, Student, School
 from schemas import ClassCreate, ClassResponse, StudentCreate, StudentResponse
 from auth import get_current_teacher
 import uuid
@@ -10,6 +10,27 @@ import csv
 import io
 
 router = APIRouter(prefix="/api/classes", tags=["classes"])
+
+
+def _next_student_number(db: Session, class_group: ClassGroup) -> int:
+    """Get the next available student_number within the school (or standalone teacher's classes)."""
+    if class_group.school_id:
+        # School-wide: max across all classes in the school
+        school_class_ids = [c.id for c in db.query(ClassGroup.id).filter(
+            ClassGroup.school_id == class_group.school_id
+        ).all()]
+        max_num = db.query(db_func.max(Student.student_number)).filter(
+            Student.class_id.in_(school_class_ids)
+        ).scalar() if school_class_ids else None
+    else:
+        # Standalone teacher: max across all their classes
+        owner_class_ids = [c.id for c in db.query(ClassGroup.id).filter(
+            ClassGroup.owner_id == class_group.owner_id
+        ).all()]
+        max_num = db.query(db_func.max(Student.student_number)).filter(
+            Student.class_id.in_(owner_class_ids)
+        ).scalar() if owner_class_ids else None
+    return (max_num or 0) + 1
 
 
 def _get_visible_classes(teacher: Teacher, db: Session):
@@ -109,7 +130,7 @@ def list_students(
     return [
         StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_number=s.class_number, class_id=s.class_id, class_name=class_group.name,
+            student_number=s.student_number, class_id=s.class_id, class_name=class_group.name,
         )
         for s in students
     ]
@@ -127,21 +148,20 @@ def add_student(
         raise HTTPException(status_code=404, detail="Class not found")
 
     student_code = data.student_code or f"S{uuid.uuid4().hex[:8].upper()}"
-    # Auto-assign class_number if not provided
-    if data.class_number:
-        class_number = data.class_number
+    # Auto-assign student_number school-wide if not provided
+    if data.student_number:
+        student_number = data.student_number
     else:
-        max_num = db.query(db_func.max(Student.class_number)).filter(Student.class_id == class_id).scalar()
-        class_number = (max_num or 0) + 1
+        student_number = _next_student_number(db, class_group)
     student = Student(
-        name=data.name, student_code=student_code, class_id=class_id, class_number=class_number
+        name=data.name, student_code=student_code, class_id=class_id, student_number=student_number
     )
     db.add(student)
     db.commit()
     db.refresh(student)
     return StudentResponse(
         id=student.id, name=student.name, student_code=student.student_code,
-        class_number=student.class_number, class_id=student.class_id, class_name=class_group.name,
+        student_number=student.student_number, class_id=student.class_id, class_name=class_group.name,
     )
 
 
@@ -186,9 +206,8 @@ def upload_students_csv(
         if existing:
             continue
         student = Student(name=name, student_code=student_code, class_id=class_id)
-        # Auto-assign class_number
-        max_num = db.query(db_func.max(Student.class_number)).filter(Student.class_id == class_id).scalar()
-        student.class_number = (max_num or 0) + 1
+        # Auto-assign student_number school-wide
+        student.student_number = _next_student_number(db, class_group)
         db.add(student)
         added += 1
 
@@ -218,7 +237,7 @@ def search_students_in_my_classes(
     return [
         StudentResponse(
             id=s.id, name=s.name, student_code=s.student_code,
-            class_number=s.class_number, class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
+            student_number=s.student_number, class_id=s.class_id, class_name=s.class_group.name if s.class_group else "",
         )
         for s in students
     ]

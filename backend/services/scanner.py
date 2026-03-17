@@ -79,28 +79,40 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
 
     h, w = cv_image.shape[:2]
 
-    # Read student number from bubble grid in the header area (top ~28% of page)
+    # Read student number from bubble grid in the header area (top ~30% of page)
     student_number = _read_student_number(thresh, h, w)
     logger.info(f"Student number read from bubbles: {student_number}")
 
-    # Look up student by class_number within the class
+    # Look up student by student_number within the school (derived from class)
     student_id = None
     student_code = None
     if student_number and class_id:
-        from models import Student
-        student = db.query(Student).filter(
-            Student.class_id == class_id,
-            Student.class_number == student_number,
-        ).first()
+        from models import Student, ClassGroup
+        class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+        if class_group and class_group.school_id:
+            # School-wide lookup: find student in any class within the school
+            school_class_ids = [c.id for c in db.query(ClassGroup.id).filter(
+                ClassGroup.school_id == class_group.school_id
+            ).all()]
+            student = db.query(Student).filter(
+                Student.student_number == student_number,
+                Student.class_id.in_(school_class_ids),
+            ).first()
+        else:
+            # Standalone: lookup within the specific class
+            student = db.query(Student).filter(
+                Student.class_id == class_id,
+                Student.student_number == student_number,
+            ).first()
         if student:
             student_id = student.id
             student_code = student.student_code
-            logger.info(f"Student matched: {student.name} (id={student.id}, class_number={student_number})")
+            logger.info(f"Student matched: {student.name} (id={student.id}, student_number={student_number})")
         else:
-            logger.warning(f"No student with class_number={student_number} in class {class_id}")
+            logger.warning(f"No student with student_number={student_number} in school/class {class_id}")
 
-    # Find all contours (potential bubbles) — only in the answer area (below top 28%)
-    answer_region_top = int(h * 0.28)
+    # Find all contours (potential bubbles) — only in the answer area (below top 30%)
+    answer_region_top = int(h * 0.30)
     answer_thresh = thresh[answer_region_top:, :]
     contours, _ = cv2.findContours(answer_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     logger.info(f"Total contours found in answer region: {len(contours)}")
@@ -157,14 +169,14 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
 
 def _read_student_number(thresh_image, img_h, img_w):
     """
-    Read the 2-digit student number from the bubble grid in the header area.
-    The grid has two rows (Tens and Units), each with 10 bubbles (digits 0-9).
-    Located in the top ~15%-27% of the page vertically, ~15%-65% horizontally.
+    Read the 3-digit student number from the bubble grid in the header area.
+    The grid has three rows (Hundreds, Tens, Units), each with 10 bubbles (digits 0-9).
+    Located in the top ~15%-29% of the page vertically, ~15%-65% horizontally.
     Returns the student number as an integer, or None if unreadable.
     """
     # Crop the student number region from the thresholded image
     y_top = int(img_h * 0.15)
-    y_bottom = int(img_h * 0.27)
+    y_bottom = int(img_h * 0.29)
     x_left = int(img_w * 0.12)
     x_right = int(img_w * 0.70)
 
@@ -204,8 +216,8 @@ def _read_student_number(thresh_image, img_h, img_w):
 
     logger.info(f"Student number region: found {len(bubbles)} bubble candidates")
 
-    if len(bubbles) < 10:
-        logger.warning(f"Not enough bubbles for student number grid (need >=10, found {len(bubbles)})")
+    if len(bubbles) < 20:
+        logger.warning(f"Not enough bubbles for student number grid (need >=20, found {len(bubbles)})")
         return None
 
     # Group into rows by Y position
@@ -227,12 +239,12 @@ def _read_student_number(thresh_image, img_h, img_w):
     digit_rows = [r for r in rows if 8 <= len(r) <= 12]
     logger.info(f"Student number digit rows found: {len(digit_rows)} (sizes: {[len(r) for r in rows]})")
 
-    if len(digit_rows) < 2:
-        logger.warning("Could not find 2 digit rows for student number")
+    if len(digit_rows) < 3:
+        logger.warning("Could not find 3 digit rows for student number")
         return None
 
-    # Take the first 2 qualifying rows (tens, then units)
-    digit_rows = digit_rows[:2]
+    # Take the first 3 qualifying rows (hundreds, tens, units)
+    digit_rows = digit_rows[:3]
 
     # Read each row — find which bubble has the highest fill ratio
     digits = []
@@ -259,7 +271,7 @@ def _read_student_number(thresh_image, img_h, img_w):
         digits.append(digit)
         logger.info(f"Student number digit: {digit} (fill ratio: {max_ratio:.2f})")
 
-    student_number = digits[0] * 10 + digits[1]
+    student_number = digits[0] * 100 + digits[1] * 10 + digits[2]
     if student_number == 0:
         logger.warning("Student number is 0 — likely nothing was shaded")
         return None

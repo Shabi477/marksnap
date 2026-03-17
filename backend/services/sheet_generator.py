@@ -29,7 +29,7 @@ ALIGNMENT_MARKER_SIZE = 5 * mm
 # Student number bubble grid constants
 STUDENT_NUM_BUBBLE_RADIUS = 3.5 * mm
 STUDENT_NUM_SPACING_X = 9.5 * mm   # horizontal spacing between digit bubbles
-STUDENT_NUM_ROW_SPACING = 10 * mm  # vertical spacing between tens and units rows
+STUDENT_NUM_ROW_SPACING = 9 * mm    # vertical spacing between digit rows
 
 OPTIONS = ["A", "B", "C", "D", "E"]
 
@@ -181,7 +181,7 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
     y = min(bar_top - bar_height, qr_y - 1.5 * mm) - 4 * mm
 
     # Info + student number box (full width, rounded)
-    info_box_height = 36 * mm
+    info_box_height = 44 * mm
     c.setFillColor(BRAND_COLOR_LIGHT)
     c.setStrokeColor(HexColor("#a5f3fc"))
     c.setLineWidth(0.8)
@@ -194,17 +194,17 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
     c.drawString(MARGIN_LEFT + 5 * mm, row1_y, f"Test: {test.name}")
     c.drawString(MARGIN_LEFT + content_width / 2, row1_y, f"Class: {class_group.name}")
 
-    # Row 2-3: Student number bubble grid
+    # Row 2-3-4: Student number bubble grid (3 digits)
     grid_label_y = row1_y - 10 * mm
     c.setFont("Helvetica-Bold", 10)
     c.setFillColor(HexColor("#0c4a6e"))
-    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y + 3 * mm, "Student")
-    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 4 * mm, "No.")
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 1 * mm, "Student")
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 8 * mm, "No.")
 
     _draw_student_number_grid(c, MARGIN_LEFT + 28 * mm, grid_label_y + 5.5 * mm)
 
-    # Row 4: Name write-in line
-    name_y = grid_label_y - 14 * mm
+    # Row 5: Name write-in line
+    name_y = grid_label_y - 22 * mm
     c.setFont("Helvetica-Bold", 10)
     c.setFillColor(HexColor("#0c4a6e"))
     c.drawString(MARGIN_LEFT + 5 * mm, name_y, "Name:")
@@ -234,10 +234,10 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
 
 
 def _draw_student_number_grid(c, x_start, y_start):
-    """Draw the 2-row student number bubble grid (Tens and Units, each 0-9)."""
+    """Draw the 3-row student number bubble grid (Hundreds, Tens, Units, each 0-9)."""
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-    for row_idx, label in enumerate(["Tens", "Units"]):
+    for row_idx, label in enumerate(["100s", "10s", "1s"]):
         row_y = y_start - row_idx * STUDENT_NUM_ROW_SPACING
 
         # Row label

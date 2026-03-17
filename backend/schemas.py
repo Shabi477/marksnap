@@ -108,13 +108,13 @@ class AssignTeacher(BaseModel):
 class StudentCreate(BaseModel):
     name: str
     student_code: Optional[str] = None
-    class_number: Optional[int] = None
+    student_number: Optional[int] = None
 
 class StudentResponse(BaseModel):
     id: int
     name: str
     student_code: str
-    class_number: Optional[int] = None
+    student_number: Optional[int] = None
     class_id: int
     class_name: Optional[str] = None
     class Config:
