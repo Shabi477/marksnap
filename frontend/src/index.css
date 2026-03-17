@@ -35,3 +35,8 @@ body {
     @apply text-gray-500 mt-1;
   }
 }
+
+/* Safe area for mobile bottom tab bar (iOS notch/home indicator) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

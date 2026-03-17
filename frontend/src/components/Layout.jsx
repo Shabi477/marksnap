@@ -10,7 +10,7 @@ import {
   Building2,
   BookOpen,
   Shield,
-  ClipboardCheck,
+  BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,6 +27,7 @@ export default function Layout() {
     { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
     { to: '/classes', icon: Users, label: 'Classes' },
     { to: '/tests', icon: FileText, label: 'Tests' },
+    { to: '/results', icon: BarChart3, label: 'Results' },
     ...(isAdmin || role === 'standalone'
       ? [{ to: '/questions', icon: BookOpen, label: 'Question Bank' }]
       : []),
@@ -36,6 +37,14 @@ export default function Layout() {
     ...(role === 'super_admin'
       ? [{ to: '/admin', icon: Shield, label: 'Content Mgmt' }]
       : []),
+  ];
+
+  // Bottom tab bar items for mobile — the most-used teacher actions
+  const bottomTabs = [
+    { to: '/', icon: LayoutDashboard, label: 'Home', end: true },
+    { to: '/classes', icon: Users, label: 'Classes' },
+    { to: '/tests', icon: FileText, label: 'Tests' },
+    { to: '/results', icon: BarChart3, label: 'Results' },
   ];
 
   const handleLogout = () => {
@@ -138,9 +147,32 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
+
+        {/* Mobile bottom tab bar */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-bottom">
+          <div className="flex items-center justify-around h-14">
+            {bottomTabs.map(({ to, icon: Icon, label, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center gap-0.5 px-2 py-1 min-w-0 flex-1 transition-colors ${
+                    isActive
+                      ? 'text-brand-600'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-tight">{label}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
       </div>
     </div>
   );

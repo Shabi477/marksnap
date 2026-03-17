@@ -13,6 +13,7 @@ import TestDetail from './pages/TestDetail';
 import ScanUpload from './pages/ScanUpload';
 import LiveScanner from './pages/LiveScanner';
 import Results from './pages/Results';
+import ResultsOverview from './pages/ResultsOverview';
 import SchoolManagement from './pages/SchoolManagement';
 import QuestionBank from './pages/QuestionBank';
 import AdminPanel from './pages/AdminPanel';
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="tests/:testId" element={<TestDetail />} />
         <Route path="scan/:testId" element={<ScanUpload />} />
         <Route path="live-scan/:testId" element={<LiveScanner />} />
+        <Route path="results" element={<ResultsOverview />} />
         <Route path="results/:testId" element={<Results />} />
         <Route path="school" element={<SchoolManagement />} />
         <Route path="questions" element={<QuestionBank />} />
