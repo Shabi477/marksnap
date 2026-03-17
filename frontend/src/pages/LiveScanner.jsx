@@ -5,40 +5,50 @@ import Spinner from '../components/Spinner';
 import jsQR from 'jsqr';
 import {
   ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, AlertTriangle,
-  Users, Pause, Play, Volume2, VolumeX,
+  Users, Volume2, VolumeX, Zap, ZapOff,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const SCAN_INTERVAL = 200; // ms between QR detection attempts
-const QR_STABLE_COUNT = 2; // frames QR must be stable before capture
-const COOLDOWN_MS = 2000; // pause after processing before next scan
+/* ── Tuning constants ─────────────────────────────────────────── */
+const QR_STABLE_COUNT = 3;   // consecutive identical QR reads before auto-capture
+const RESULT_DISPLAY_MS = 2500; // show result overlay then auto-resume
+const SCAN_FPS = 15;         // QR detection frames per second
 
 export default function LiveScanner() {
   const { testId } = useParams();
+
+  /* Refs */
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const scanTimerRef = useRef(null);
+  const imageCaptureRef = useRef(null);
+  const rafRef = useRef(null);
   const lastQrRef = useRef(null);
   const stableCountRef = useRef(0);
-  const cooldownRef = useRef(false);
+  const busyRef = useRef(false);        // true while processing or showing result
   const audioCtxRef = useRef(null);
+  const lastFrameTimeRef = useRef(0);
+  const processedQrCodesRef = useRef(new Set()); // prevent re-scanning same sheet
 
+  /* State */
   const [test, setTest] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
   const [lastResult, setLastResult] = useState(null);
+  const [qrDetected, setQrDetected] = useState(false); // green border indicator
   const [scannedStudents, setScannedStudents] = useState([]);
   const [error, setError] = useState(null);
+  const [scanCount, setScanCount] = useState(0); // total successful scans
 
-  // Load test info
+  /* ── Load test info ──────────────────────────────────────────── */
   useEffect(() => {
-    testsAPI.get(testId).then((res) => setTest(res.data)).catch(() => setError('Test not found'));
+    testsAPI.get(testId).then((r) => setTest(r.data)).catch(() => setError('Test not found'));
   }, [testId]);
 
-  // Beep sound
+  /* ── Audio feedback ──────────────────────────────────────────── */
   const playBeep = useCallback((success = true) => {
     if (!soundEnabled) return;
     try {
@@ -56,40 +66,74 @@ export default function LiveScanner() {
     } catch { /* audio not supported */ }
   }, [soundEnabled]);
 
-  // Start camera
+  /* ── Torch toggle ────────────────────────────────────────────── */
+  const toggleTorch = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      const next = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: next }] });
+      setTorchOn(next);
+    } catch { /* torch not supported */ }
+  }, [torchOn]);
+
+  /* ── Start camera ────────────────────────────────────────────── */
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 2560 } },
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 2560 },
+        },
         audio: false,
       });
       streamRef.current = stream;
+
+      const track = stream.getVideoTracks()[0];
+
+      // Request continuous autofocus
+      try {
+        const caps = track.getCapabilities?.();
+        if (caps?.focusMode?.includes('continuous')) {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        }
+        // Check torch support
+        if (caps?.torch) setTorchAvailable(true);
+      } catch { /* constraints not supported */ }
+
+      // Set up ImageCapture API if available (for high-res photo capture)
+      if (typeof ImageCapture !== 'undefined') {
+        imageCaptureRef.current = new ImageCapture(track);
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
       setCameraActive(true);
       setError(null);
-    } catch (err) {
+    } catch {
       setError('Camera access denied. Please allow camera permission and try again.');
       setCameraActive(false);
     }
   }, []);
 
-  // Stop camera
+  /* ── Stop camera ─────────────────────────────────────────────── */
   const stopCamera = useCallback(() => {
-    if (scanTimerRef.current) {
-      clearInterval(scanTimerRef.current);
-      scanTimerRef.current = null;
-    }
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    imageCaptureRef.current = null;
     setCameraActive(false);
+    setQrDetected(false);
+    setTorchOn(false);
+    setTorchAvailable(false);
   }, []);
 
-  // Cleanup on unmount
+  /* ── Cleanup on unmount ──────────────────────────────────────── */
   useEffect(() => {
     return () => {
       stopCamera();
@@ -97,45 +141,45 @@ export default function LiveScanner() {
     };
   }, [stopCamera]);
 
-  // Capture frame as blob
-  const captureFrame = useCallback(() => {
+  /* ── Capture high-res image ──────────────────────────────────── */
+  const captureHighRes = useCallback(async () => {
+    // Try ImageCapture API first (full sensor resolution)
+    if (imageCaptureRef.current) {
+      try {
+        const blob = await imageCaptureRef.current.takePhoto({ imageWidth: 2560 });
+        return blob;
+      } catch { /* fall through to canvas */ }
+    }
+    // Fallback: canvas capture from video
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState < 2) return null;
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    return { ctx, width: canvas.width, height: canvas.height };
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
   }, []);
 
-  // Process a detected sheet
-  const processSheet = useCallback(async () => {
-    if (processing || cooldownRef.current) return;
+  /* ── Process a detected sheet ────────────────────────────────── */
+  const processSheet = useCallback(async (qrData) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setProcessing(true);
-
-    // Capture a fresh frame for processing
-    const frame = captureFrame();
-    const canvas = canvasRef.current;
-    if (!canvas || !frame) { setProcessing(false); return; }
+    setQrDetected(false);
 
     try {
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-      if (!blob) { setProcessing(false); return; }
+      const blob = await captureHighRes();
+      if (!blob) { busyRef.current = false; setProcessing(false); return; }
 
-      // Pass the QR data the frontend already detected (more reliable than backend re-reading)
-      const qrString = lastQrRef.current || null;
-
-      const res = await scanAPI.scanLive(testId, blob, qrString);
+      const res = await scanAPI.scanLive(testId, blob, qrData);
       const data = res.data;
 
       playBeep(true);
       if (navigator.vibrate) navigator.vibrate(100);
 
       setLastResult(data);
+      setScanCount((c) => c + 1);
       setScannedStudents((prev) => {
-        // Don't add duplicate
         if (data.student_code && prev.some((s) => s.student_code === data.student_code)) {
           return prev.map((s) =>
             s.student_code === data.student_code ? { ...data, time: new Date() } : s
@@ -144,76 +188,102 @@ export default function LiveScanner() {
         return [{ ...data, time: new Date() }, ...prev];
       });
 
-      // Cooldown before next scan
-      cooldownRef.current = true;
+      setProcessing(false);
+
+      // Show result then auto-resume
       setTimeout(() => {
-        cooldownRef.current = false;
+        setLastResult(null);
         lastQrRef.current = null;
         stableCountRef.current = 0;
-        setLastResult(null);
-      }, COOLDOWN_MS);
+        busyRef.current = false;
+      }, RESULT_DISPLAY_MS);
 
     } catch (err) {
       const msg = err.response?.data?.detail || 'Scan failed';
       playBeep(false);
       toast.error(msg);
-    } finally {
       setProcessing(false);
+      // Brief pause before resuming scanning after error
+      setTimeout(() => {
+        lastQrRef.current = null;
+        stableCountRef.current = 0;
+        busyRef.current = false;
+      }, 1500);
     }
-  }, [testId, processing, playBeep]);
+  }, [testId, playBeep, captureHighRes]);
 
-  // QR scanning loop
+  /* ── QR scanning loop (requestAnimationFrame) ────────────────── */
   useEffect(() => {
-    if (!cameraActive || paused) {
-      if (scanTimerRef.current) {
-        clearInterval(scanTimerRef.current);
-        scanTimerRef.current = null;
-      }
-      return;
-    }
+    if (!cameraActive) return;
 
-    scanTimerRef.current = setInterval(() => {
-      if (processing || cooldownRef.current) return;
+    const minInterval = 1000 / SCAN_FPS;
 
-      const frame = captureFrame();
-      if (!frame) return;
+    const scanFrame = (timestamp) => {
+      rafRef.current = requestAnimationFrame(scanFrame);
 
-      const imageData = frame.ctx.getImageData(0, 0, frame.width, frame.height);
-      const code = jsQR(imageData.data, frame.width, frame.height, { inversionAttempts: 'attemptBoth' });
+      // Throttle to SCAN_FPS
+      if (timestamp - lastFrameTimeRef.current < minInterval) return;
+      lastFrameTimeRef.current = timestamp;
+
+      if (busyRef.current) return;
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState < 2) return;
+
+      // Use a smaller analysis canvas for faster QR detection
+      const scale = Math.min(1, 800 / video.videoWidth);
+      const w = Math.round(video.videoWidth * scale);
+      const h = Math.round(video.videoHeight * scale);
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(imageData.data, w, h, { inversionAttempts: 'attemptBoth' });
 
       if (code && code.data) {
+        setQrDetected(true);
+
         if (code.data === lastQrRef.current) {
           stableCountRef.current++;
           if (stableCountRef.current >= QR_STABLE_COUNT) {
-            processSheet();
+            // Check if we already scanned this exact QR recently
+            if (!processedQrCodesRef.current.has(code.data)) {
+              processedQrCodesRef.current.add(code.data);
+              // Clear old entries after 30s to allow re-scanning
+              setTimeout(() => processedQrCodesRef.current.delete(code.data), 30000);
+              processSheet(code.data);
+            }
           }
         } else {
           lastQrRef.current = code.data;
           stableCountRef.current = 1;
         }
       } else {
+        setQrDetected(false);
         lastQrRef.current = null;
         stableCountRef.current = 0;
       }
-    }, SCAN_INTERVAL);
-
-    return () => {
-      if (scanTimerRef.current) {
-        clearInterval(scanTimerRef.current);
-        scanTimerRef.current = null;
-      }
     };
-  }, [cameraActive, paused, processing, captureFrame, processSheet]);
 
-  // Stats
+    rafRef.current = requestAnimationFrame(scanFrame);
+    return () => {
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    };
+  }, [cameraActive, processSheet]);
+
+  /* ── Stats ───────────────────────────────────────────────────── */
   const totalScanned = scannedStudents.length;
   const avgScore = totalScanned > 0
     ? Math.round(scannedStudents.reduce((s, r) => s + r.percentage, 0) / totalScanned)
     : 0;
 
+  /* ── Render ──────────────────────────────────────────────────── */
   return (
     <div className="space-y-2">
-      {/* Header */}
+      {/* Compact header */}
       <div className="flex items-center gap-3">
         <Link to={`/tests/${testId}`} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -222,6 +292,11 @@ export default function LiveScanner() {
           <h1 className="text-lg font-bold text-gray-900 truncate">Live Scanner</h1>
           <p className="text-xs text-gray-500 truncate">{test?.name || 'Loading...'}</p>
         </div>
+        {totalScanned > 0 && (
+          <span className="text-xs font-semibold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
+            {totalScanned} scanned
+          </span>
+        )}
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
@@ -233,9 +308,27 @@ export default function LiveScanner() {
         </button>
       </div>
 
-      {/* Camera view — full width, cancel Layout padding on mobile */}
+      {/* Camera view — full width, cancel layout padding */}
       <div className="-mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden relative">
-        <div className="relative bg-black flex items-center justify-center" style={{ height: cameraActive ? 'calc(100vh - 120px)' : 'auto', minHeight: cameraActive ? 0 : 300 }}>
+        <div
+          className="relative bg-black flex items-center justify-center"
+          style={{
+            height: cameraActive ? 'calc(100vh - 120px)' : 'auto',
+            minHeight: cameraActive ? 0 : 300,
+          }}
+        >
+          {/* QR detection border – animated green glow */}
+          {cameraActive && qrDetected && !processing && !lastResult && (
+            <div
+              className="absolute inset-0 z-20 pointer-events-none"
+              style={{
+                border: '4px solid #22c55e',
+                boxShadow: '0 0 30px rgba(34, 197, 94, 0.5), inset 0 0 30px rgba(34, 197, 94, 0.15)',
+                animation: 'pulse 0.8s ease-in-out infinite alternate',
+              }}
+            />
+          )}
+
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
@@ -245,19 +338,23 @@ export default function LiveScanner() {
           />
           <canvas ref={canvasRef} className="hidden" />
 
+          {/* Start screen */}
           {!cameraActive && (
             <div className="text-center p-8">
               <Camera className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 mb-4">Camera not active</p>
+              <p className="text-gray-400 mb-2">Point your camera at an answer sheet</p>
+              <p className="text-gray-500 text-sm mb-6">
+                Scanning is fully automatic — just hold the sheet steady
+              </p>
               <button onClick={startCamera} className="btn-primary text-lg px-8 py-3">
-                Start Camera
+                Start Scanning
               </button>
             </div>
           )}
 
           {/* Processing overlay */}
           {processing && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="absolute inset-0 z-30 bg-black/40 flex items-center justify-center">
               <div className="bg-white rounded-2xl p-6 text-center shadow-xl">
                 <Spinner size="lg" className="mx-auto mb-3" />
                 <p className="font-semibold text-gray-700">Processing...</p>
@@ -267,8 +364,8 @@ export default function LiveScanner() {
 
           {/* Result overlay */}
           {lastResult && !processing && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <div className="bg-white rounded-2xl p-6 text-center shadow-xl max-w-sm mx-4 animate-in fade-in zoom-in duration-200">
+            <div className="absolute inset-0 z-30 bg-black/50 flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-6 text-center shadow-xl max-w-sm mx-4">
                 <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ${
                   lastResult.percentage >= 50 ? 'bg-emerald-100' : 'bg-red-100'
                 }`}>
@@ -294,30 +391,36 @@ export default function LiveScanner() {
             </div>
           )}
 
-          {/* Scanning guide overlay + capture button */}
+          {/* Scanning status indicator */}
           {cameraActive && !processing && !lastResult && (
-            <div className="absolute inset-0 flex flex-col">
-              <div className="flex-1" />
-              <div className="pb-5 pt-1 flex flex-col items-center gap-1">
-                <button
-                  onClick={processSheet}
-                  disabled={processing}
-                  className="rounded-full bg-white/90 shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-brand-500"
-                  style={{ width: 72, height: 72 }}
-                >
-                  <Camera className="w-9 h-9 text-brand-600" />
-                </button>
-                <span className="bg-black/60 text-white text-xs px-3 py-1 rounded-full">
-                  Frame the whole sheet, then tap to capture
-                </span>
+            <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
+              <div className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                qrDetected
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                  : 'bg-black/60 text-white/80'
+              }`}>
+                {qrDetected ? '✓ QR Code detected — hold steady...' : 'Point camera at answer sheet'}
               </div>
             </div>
           )}
         </div>
 
-        {/* Camera controls */}
+        {/* Top controls overlay */}
         {cameraActive && (
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-2 z-30 flex gap-2">
+            {torchAvailable && (
+              <button
+                onClick={toggleTorch}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${
+                  torchOn
+                    ? 'bg-yellow-400/90 text-yellow-900'
+                    : 'bg-black/50 text-white hover:bg-black/70'
+                }`}
+              >
+                {torchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
+                {torchOn ? 'Light On' : 'Light'}
+              </button>
+            )}
             <button
               onClick={stopCamera}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium bg-red-500/80 text-white text-sm hover:bg-red-600 transition-colors"
@@ -391,6 +494,14 @@ export default function LiveScanner() {
           </div>
         </div>
       )}
+
+      {/* CSS animation for QR detection pulse */}
+      <style>{`
+        @keyframes pulse {
+          from { box-shadow: 0 0 20px rgba(34,197,94,0.4), inset 0 0 20px rgba(34,197,94,0.1); }
+          to   { box-shadow: 0 0 40px rgba(34,197,94,0.7), inset 0 0 40px rgba(34,197,94,0.2); }
+        }
+      `}</style>
     </div>
   );
 }
