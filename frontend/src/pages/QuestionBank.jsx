@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { questionsAPI, topicsAPI, subjectsAPI, getUploadUrl } from '../services/api';
+import { questionsAPI, topicsAPI, subjectsAPI, objectivesAPI, getUploadUrl } from '../services/api';
 import toast from 'react-hot-toast';
 import { difficultyColor } from '../utils/helpers';
 import useStrandCategories from '../hooks/useStrandCategories';
@@ -10,6 +10,8 @@ export default function QuestionBank() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [topics, setTopics] = useState([]);
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [objectives, setObjectives] = useState([]);
+  const [selectedObjective, setSelectedObjective] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ difficulty: '', key_stage: '', strand: '', area: '', skill_type: '', search: '' });
@@ -29,17 +31,30 @@ export default function QuestionBank() {
         strand: filters.area || filters.strand || undefined,
       }).then(r => setTopics(r.data));
       setSelectedTopic(null);
+      setObjectives([]);
+      setSelectedObjective(null);
     } else {
       setTopics([]);
+      setObjectives([]);
     }
   }, [selectedSubject, filters.key_stage, filters.strand, filters.area]);
+
+  // Load objectives when a topic is selected
+  useEffect(() => {
+    if (selectedSubject && selectedTopic) {
+      objectivesAPI.list(selectedSubject, selectedTopic).then(r => setObjectives(r.data)).catch(() => setObjectives([]));
+    } else {
+      setObjectives([]);
+    }
+    setSelectedObjective(null);
+  }, [selectedSubject, selectedTopic]);
 
   // Derive strand/category/area options from topics
   const { hasCategories, strandOptions: strands, areaOptions: areas } = useStrandCategories(topics, filters.strand);
 
   useEffect(() => {
     fetchQuestions();
-  }, [selectedSubject, selectedTopic, filters.difficulty, filters.key_stage, filters.strand, filters.area, filters.skill_type]);
+  }, [selectedSubject, selectedTopic, selectedObjective, filters.difficulty, filters.key_stage, filters.strand, filters.area, filters.skill_type]);
 
   const fetchQuestions = async () => {
     if (!selectedSubject) { setQuestions([]); return; }
@@ -47,6 +62,7 @@ export default function QuestionBank() {
     try {
       const params = { subject_id: selectedSubject };
       if (selectedTopic) params.topic_id = selectedTopic;
+      if (selectedObjective) params.objective_id = selectedObjective;
       if (filters.difficulty) params.difficulty = filters.difficulty;
       if (filters.key_stage) params.key_stage = filters.key_stage;
       // Send the most specific strand: area (full "Category: Sub") or category prefix
@@ -179,6 +195,20 @@ export default function QuestionBank() {
             ))}
           </select>
 
+          {/* Objective — shows when a topic is selected */}
+          {selectedTopic && objectives.length > 0 && (
+            <select
+              value={selectedObjective || ''}
+              onChange={e => setSelectedObjective(e.target.value ? Number(e.target.value) : null)}
+              className="rounded-lg border-gray-300 text-sm py-2"
+            >
+              <option value="">All Objectives</option>
+              {objectives.map(o => (
+                <option key={o.id} value={o.id}>{o.name} ({o.question_count})</option>
+              ))}
+            </select>
+          )}
+
           {/* Difficulty */}
           <select
             value={filters.difficulty}
@@ -258,6 +288,11 @@ export default function QuestionBank() {
                       {q.topic_name && (
                         <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-50 text-indigo-700">
                           {q.topic_name}
+                        </span>
+                      )}
+                      {q.objective_name && (
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700">
+                          {q.objective_name}
                         </span>
                       )}
                       {q.year_group && (

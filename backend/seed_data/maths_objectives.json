@@ -1,0 +1,765 @@
+{
+  "description": "Granular learning objectives for KS3 and KS4 Maths topics, aligned to the UK National Curriculum",
+  "objectives": [
+    {"topic": "Place value and ordering integers & decimals", "key_stage": "KS3", "objectives": [
+      "Read, write and order integers up to 10 million",
+      "Order and compare decimals to 3 decimal places",
+      "Use place value to multiply and divide by powers of 10",
+      "Round integers to a given number of significant figures"
+    ]},
+    {"topic": "Four operations with integers", "key_stage": "KS3", "objectives": [
+      "Add and subtract integers including negative numbers",
+      "Multiply multi-digit integers using long multiplication",
+      "Divide integers using short and long division",
+      "Apply the order of operations (BIDMAS/BODMAS)"
+    ]},
+    {"topic": "Four operations with decimals", "key_stage": "KS3", "objectives": [
+      "Add and subtract decimals with different numbers of decimal places",
+      "Multiply decimals by integers and decimals",
+      "Divide decimals by integers and decimals",
+      "Estimate answers to decimal calculations"
+    ]},
+    {"topic": "Factors, multiples and primes", "key_stage": "KS3", "objectives": [
+      "Identify factors and factor pairs of a number",
+      "Identify multiples of a number",
+      "Determine whether a number is prime",
+      "Express a number as a product of prime factors (factor tree / division)"
+    ]},
+    {"topic": "HCF and LCM", "key_stage": "KS3", "objectives": [
+      "Find the HCF of two numbers using listing",
+      "Find the LCM of two numbers using listing",
+      "Use prime factor decomposition to find HCF",
+      "Use prime factor decomposition to find LCM",
+      "Apply HCF and LCM to solve word problems"
+    ]},
+    {"topic": "Powers and roots", "key_stage": "KS3", "objectives": [
+      "Calculate squares and cubes of integers",
+      "Calculate square roots and cube roots",
+      "Evaluate expressions involving index notation",
+      "Understand and use zero and negative integer indices"
+    ]},
+    {"topic": "Standard form", "key_stage": "KS3", "objectives": [
+      "Convert large numbers to standard form",
+      "Convert small numbers to standard form",
+      "Convert from standard form to ordinary numbers",
+      "Order numbers written in standard form"
+    ]},
+    {"topic": "Rounding, estimation and bounds", "key_stage": "KS3", "objectives": [
+      "Round to a given number of decimal places",
+      "Round to a given number of significant figures",
+      "Estimate calculations by rounding",
+      "Find error intervals for rounded values"
+    ]},
+    {"topic": "Fractions: four operations", "key_stage": "KS3", "objectives": [
+      "Add fractions with different denominators",
+      "Subtract fractions with different denominators",
+      "Multiply fractions and mixed numbers",
+      "Divide fractions and mixed numbers",
+      "Convert between improper fractions and mixed numbers"
+    ]},
+    {"topic": "Fractions, decimals and percentages conversion", "key_stage": "KS3", "objectives": [
+      "Convert fractions to decimals using division",
+      "Convert decimals to fractions and simplify",
+      "Convert fractions to percentages",
+      "Convert percentages to fractions and decimals",
+      "Recognise common fraction-decimal-percentage equivalences"
+    ]},
+    {"topic": "Percentage increase and decrease", "key_stage": "KS3", "objectives": [
+      "Calculate a percentage increase of an amount",
+      "Calculate a percentage decrease of an amount",
+      "Use multipliers for percentage increase and decrease",
+      "Find the original amount after a percentage change (reverse percentages)"
+    ]},
+    {"topic": "Percentage of an amount", "key_stage": "KS3", "objectives": [
+      "Calculate a percentage of a quantity (non-calculator)",
+      "Calculate a percentage of a quantity (calculator)",
+      "Express one quantity as a percentage of another",
+      "Solve problems involving percentages in context (e.g. discounts, VAT)"
+    ]},
+    {"topic": "Ordering fractions, decimals and percentages", "key_stage": "KS3", "objectives": [
+      "Convert fractions, decimals and percentages to compare them",
+      "Order a mixed set of fractions, decimals and percentages",
+      "Place fractions, decimals and percentages on a number line"
+    ]},
+    {"topic": "Simplifying expressions", "key_stage": "KS3", "objectives": [
+      "Collect like terms in an expression",
+      "Simplify expressions involving multiplication of terms",
+      "Simplify expressions involving division of terms",
+      "Simplify expressions with powers (e.g. a² × a³)"
+    ]},
+    {"topic": "Expanding single brackets", "key_stage": "KS3", "objectives": [
+      "Expand a single bracket with a positive multiplier",
+      "Expand a single bracket with a negative multiplier",
+      "Expand and simplify expressions with two or more brackets"
+    ]},
+    {"topic": "Factorising single brackets", "key_stage": "KS3", "objectives": [
+      "Identify the highest common factor of terms",
+      "Factorise an expression into a single bracket",
+      "Factorise expressions involving powers"
+    ]},
+    {"topic": "Substitution", "key_stage": "KS3", "objectives": [
+      "Substitute positive integers into expressions",
+      "Substitute negative numbers into expressions",
+      "Substitute into expressions involving powers and roots",
+      "Substitute into formulae and evaluate"
+    ]},
+    {"topic": "Solving one-step and two-step equations", "key_stage": "KS3", "objectives": [
+      "Solve one-step equations (e.g. x + 5 = 12)",
+      "Solve two-step equations (e.g. 2x + 3 = 11)",
+      "Solve equations with the unknown on both sides",
+      "Solve equations involving brackets",
+      "Form and solve equations from word problems"
+    ]},
+    {"topic": "Inequalities on a number line", "key_stage": "KS3", "objectives": [
+      "Use inequality symbols (< > ≤ ≥) correctly",
+      "Represent inequalities on a number line",
+      "Solve simple linear inequalities",
+      "List integer values that satisfy an inequality"
+    ]},
+    {"topic": "Sequences: term-to-term and nth term (linear)", "key_stage": "KS3", "objectives": [
+      "Continue a sequence given the term-to-term rule",
+      "Find the term-to-term rule of a linear sequence",
+      "Find the nth term expression for a linear sequence",
+      "Use the nth term to find any term in a sequence",
+      "Determine whether a given number is in a sequence"
+    ]},
+    {"topic": "Coordinates and plotting straight-line graphs", "key_stage": "KS3", "objectives": [
+      "Plot coordinates in all four quadrants",
+      "Complete a table of values for y = mx + c",
+      "Plot a straight-line graph from a table of values",
+      "Recognise equations of horizontal and vertical lines"
+    ]},
+    {"topic": "Gradient and y-intercept", "key_stage": "KS3", "objectives": [
+      "Find the gradient of a line from a graph",
+      "Find the y-intercept from a graph",
+      "Identify the gradient and y-intercept from y = mx + c",
+      "Sketch a line given its gradient and y-intercept"
+    ]},
+    {"topic": "Real-life graphs and distance-time graphs", "key_stage": "KS3", "objectives": [
+      "Interpret real-life graphs in context (e.g. water filling a container)",
+      "Read values from a distance-time graph",
+      "Calculate speed from a distance-time graph",
+      "Draw a distance-time graph from a description"
+    ]},
+    {"topic": "Ratio: simplifying and sharing", "key_stage": "KS3", "objectives": [
+      "Simplify a ratio to its simplest form",
+      "Write a ratio from a word problem",
+      "Share an amount in a given ratio",
+      "Use ratio to find missing quantities",
+      "Express a ratio as a fraction or percentage"
+    ]},
+    {"topic": "Direct proportion", "key_stage": "KS3", "objectives": [
+      "Recognise direct proportion relationships",
+      "Solve direct proportion problems using the unitary method",
+      "Use scaling to solve proportion problems",
+      "Solve best-buy / value-for-money problems"
+    ]},
+    {"topic": "Inverse proportion", "key_stage": "KS3", "objectives": [
+      "Recognise inverse proportion relationships",
+      "Solve inverse proportion problems",
+      "Interpret graphs showing inverse proportion"
+    ]},
+    {"topic": "Speed, distance and time", "key_stage": "KS3", "objectives": [
+      "Use the formula speed = distance ÷ time",
+      "Calculate distance given speed and time",
+      "Calculate time given speed and distance",
+      "Convert between units of speed (km/h, m/s, mph)"
+    ]},
+    {"topic": "Metric and imperial unit conversions", "key_stage": "KS3", "objectives": [
+      "Convert between metric units of length, mass and capacity",
+      "Know approximate metric-imperial equivalents",
+      "Convert between metric and imperial units",
+      "Solve problems involving unit conversions"
+    ]},
+    {"topic": "Angle facts (straight lines, around a point, vertically opposite)", "key_stage": "KS3", "objectives": [
+      "Calculate missing angles on a straight line (sum = 180°)",
+      "Calculate missing angles around a point (sum = 360°)",
+      "Identify and use vertically opposite angles",
+      "Solve multi-step angle problems combining rules"
+    ]},
+    {"topic": "Angles in parallel lines", "key_stage": "KS3", "objectives": [
+      "Identify alternate angles and know they are equal",
+      "Identify co-interior (allied) angles and know they sum to 180°",
+      "Identify corresponding angles and know they are equal",
+      "Calculate missing angles in parallel line diagrams",
+      "Give reasons for angle calculations using correct terminology"
+    ]},
+    {"topic": "Angle sum of triangles and quadrilaterals", "key_stage": "KS3", "objectives": [
+      "Use the angle sum of a triangle (180°) to find missing angles",
+      "Use the angle sum of a quadrilateral (360°) to find missing angles",
+      "Find missing angles in isosceles and equilateral triangles",
+      "Use exterior angle of a triangle theorem"
+    ]},
+    {"topic": "Interior and exterior angles of polygons", "key_stage": "KS3", "objectives": [
+      "Calculate the sum of interior angles of a polygon",
+      "Calculate a single interior angle of a regular polygon",
+      "Calculate an exterior angle of a regular polygon",
+      "Find the number of sides given an interior or exterior angle"
+    ]},
+    {"topic": "Properties of 2-D shapes", "key_stage": "KS3", "objectives": [
+      "Classify triangles by sides and angles",
+      "Classify quadrilaterals by their properties",
+      "Identify properties of regular and irregular polygons",
+      "Use properties of shapes to solve problems"
+    ]},
+    {"topic": "Properties of 3-D shapes", "key_stage": "KS3", "objectives": [
+      "Identify and name common 3-D shapes",
+      "Count faces, edges and vertices using Euler's formula",
+      "Draw nets of 3-D shapes",
+      "Identify 3-D shapes from their nets"
+    ]},
+    {"topic": "Area of rectangles, triangles and parallelograms", "key_stage": "KS3", "objectives": [
+      "Calculate the area of a rectangle",
+      "Calculate the area of a triangle using ½ × base × height",
+      "Calculate the area of a parallelogram",
+      "Find a missing dimension given the area"
+    ]},
+    {"topic": "Area of trapeziums and compound shapes", "key_stage": "KS3", "objectives": [
+      "Calculate the area of a trapezium using ½(a+b)h",
+      "Split compound shapes into simpler shapes",
+      "Calculate the area of compound rectilinear shapes",
+      "Calculate the area of compound shapes involving triangles and trapeziums"
+    ]},
+    {"topic": "Circumference and area of circles", "key_stage": "KS3", "objectives": [
+      "Calculate the circumference of a circle using C = πd",
+      "Calculate the area of a circle using A = πr²",
+      "Find the radius or diameter given circumference or area",
+      "Solve problems involving semicircles and quarter circles"
+    ]},
+    {"topic": "Volume of prisms", "key_stage": "KS3", "objectives": [
+      "Calculate the volume of a cuboid",
+      "Calculate the volume of a triangular prism",
+      "Calculate the volume of any prism using cross-section area × length",
+      "Find a missing dimension given the volume"
+    ]},
+    {"topic": "Surface area", "key_stage": "KS3", "objectives": [
+      "Calculate the surface area of a cuboid",
+      "Calculate the surface area of a triangular prism",
+      "Calculate the surface area of a cylinder",
+      "Draw and use nets to calculate surface area"
+    ]},
+    {"topic": "Perimeter of compound shapes", "key_stage": "KS3", "objectives": [
+      "Find missing lengths in compound rectilinear shapes",
+      "Calculate the perimeter of compound shapes",
+      "Solve perimeter problems involving circles (arcs)"
+    ]},
+    {"topic": "Transformations: reflection", "key_stage": "KS3", "objectives": [
+      "Reflect a shape in a horizontal or vertical mirror line",
+      "Reflect a shape in the line y = x or y = −x",
+      "Describe a reflection fully (stating the mirror line)"
+    ]},
+    {"topic": "Transformations: rotation", "key_stage": "KS3", "objectives": [
+      "Rotate a shape about the origin",
+      "Rotate a shape about a given centre",
+      "Describe a rotation fully (centre, angle, direction)"
+    ]},
+    {"topic": "Transformations: translation", "key_stage": "KS3", "objectives": [
+      "Translate a shape using a column vector",
+      "Describe a translation using a column vector",
+      "Understand that translation preserves shape and size"
+    ]},
+    {"topic": "Transformations: enlargement", "key_stage": "KS3", "objectives": [
+      "Enlarge a shape by a positive integer scale factor from a centre",
+      "Enlarge a shape by a fractional scale factor",
+      "Describe an enlargement fully (centre, scale factor)",
+      "Find the centre of enlargement"
+    ]},
+    {"topic": "Symmetry (lines and rotational)", "key_stage": "KS3", "objectives": [
+      "Identify lines of symmetry in 2-D shapes",
+      "Determine the order of rotational symmetry",
+      "Complete a shape given line(s) of symmetry"
+    ]},
+    {"topic": "Constructions: bisectors and loci", "key_stage": "KS3", "objectives": [
+      "Construct the perpendicular bisector of a line segment",
+      "Construct the bisector of an angle",
+      "Construct a perpendicular from a point to a line",
+      "Identify and draw loci satisfying given conditions"
+    ]},
+    {"topic": "Pythagoras' theorem (introduction)", "key_stage": "KS3", "objectives": [
+      "Identify the hypotenuse in a right-angled triangle",
+      "Use Pythagoras' theorem to find the hypotenuse",
+      "Use Pythagoras' theorem to find a shorter side",
+      "Apply Pythagoras' theorem to solve problems in context"
+    ]},
+    {"topic": "Probability scales and basic probability", "key_stage": "KS3", "objectives": [
+      "Place events on a probability scale from 0 to 1",
+      "Calculate the theoretical probability of a single event",
+      "Understand that probabilities of all outcomes sum to 1",
+      "Calculate the probability of an event not happening"
+    ]},
+    {"topic": "Sample space diagrams and listing outcomes", "key_stage": "KS3", "objectives": [
+      "List all outcomes for a single event systematically",
+      "Construct a sample space diagram for two events",
+      "Use a sample space diagram to find probabilities",
+      "Construct two-way tables for combined events"
+    ]},
+    {"topic": "Relative frequency and experimental probability", "key_stage": "KS3", "objectives": [
+      "Calculate relative frequency from experimental data",
+      "Compare experimental and theoretical probabilities",
+      "Use relative frequency to estimate probabilities",
+      "Understand that more trials give better estimates"
+    ]},
+    {"topic": "Averages: mean, median, mode and range", "key_stage": "KS3", "objectives": [
+      "Calculate the mean of a data set",
+      "Find the median of a data set",
+      "Identify the mode of a data set",
+      "Calculate the range of a data set",
+      "Choose the most appropriate average for a data set",
+      "Find a missing value given the mean"
+    ]},
+    {"topic": "Interpreting and drawing bar charts, pie charts, line graphs", "key_stage": "KS3", "objectives": [
+      "Draw and interpret bar charts (including dual/composite)",
+      "Interpret pie charts and calculate sector angles",
+      "Draw pie charts from data",
+      "Draw and interpret line graphs"
+    ]},
+    {"topic": "Scatter graphs and correlation", "key_stage": "KS3", "objectives": [
+      "Plot a scatter graph from given data",
+      "Describe the type of correlation (positive, negative, none)",
+      "Draw a line of best fit",
+      "Use a line of best fit to estimate values"
+    ]},
+    {"topic": "Frequency tables and grouped data", "key_stage": "KS3", "objectives": [
+      "Construct a frequency table from raw data",
+      "Find the modal class from a grouped frequency table",
+      "Calculate an estimate of the mean from a grouped frequency table",
+      "Identify the class interval containing the median"
+    ]},
+    {"topic": "Stem-and-leaf diagrams", "key_stage": "KS3", "objectives": [
+      "Construct an ordered stem-and-leaf diagram",
+      "Find the median from a stem-and-leaf diagram",
+      "Find the mode and range from a stem-and-leaf diagram",
+      "Interpret a back-to-back stem-and-leaf diagram"
+    ]},
+
+    {"topic": "Integers: ordering, place value, four operations", "key_stage": "KS4", "objectives": [
+      "Order positive and negative integers",
+      "Apply BIDMAS to multi-step integer calculations",
+      "Solve complex word problems involving integer operations"
+    ]},
+    {"topic": "Decimals: four operations", "key_stage": "KS4", "objectives": [
+      "Multiply and divide decimals by decimals",
+      "Solve problems involving recurring decimals",
+      "Estimate answers involving decimal calculations"
+    ]},
+    {"topic": "Fractions: four operations (complex)", "key_stage": "KS4", "objectives": [
+      "Add and subtract algebraic fractions",
+      "Multiply and divide mixed numbers efficiently",
+      "Solve problems involving fractions of fractions",
+      "Apply fraction operations to solve multi-step problems"
+    ]},
+    {"topic": "Indices and laws of indices", "key_stage": "KS4", "objectives": [
+      "Apply the multiplication law of indices (aᵐ × aⁿ = aᵐ⁺ⁿ)",
+      "Apply the division law of indices (aᵐ ÷ aⁿ = aᵐ⁻ⁿ)",
+      "Apply the power law of indices ((aᵐ)ⁿ = aᵐⁿ)",
+      "Evaluate expressions with zero and negative indices",
+      "Evaluate expressions with fractional indices",
+      "Simplify expressions using multiple index laws"
+    ]},
+    {"topic": "Surds: simplifying and rationalising", "key_stage": "KS4", "objectives": [
+      "Simplify surds (e.g. √50 = 5√2)",
+      "Add and subtract surds",
+      "Multiply and divide surds",
+      "Expand brackets involving surds",
+      "Rationalise the denominator of a fraction"
+    ]},
+    {"topic": "Standard form calculations", "key_stage": "KS4", "objectives": [
+      "Add and subtract numbers in standard form",
+      "Multiply and divide numbers in standard form",
+      "Solve problems involving standard form in context (e.g. astronomy, atoms)"
+    ]},
+    {"topic": "Upper and lower bounds", "key_stage": "KS4", "objectives": [
+      "Find upper and lower bounds for rounded values",
+      "Calculate upper and lower bounds for expressions",
+      "Apply bounds to real-life calculations (e.g. speed, area)"
+    ]},
+    {"topic": "Error intervals", "key_stage": "KS4", "objectives": [
+      "Write error intervals for rounded numbers",
+      "Write error intervals for truncated numbers",
+      "Apply error intervals in calculations"
+    ]},
+    {"topic": "Recurring decimals to fractions", "key_stage": "KS4", "objectives": [
+      "Convert simple recurring decimals to fractions (e.g. 0.333...)",
+      "Convert complex recurring decimals to fractions (e.g. 0.1̇2̇)",
+      "Prove that 0.999... = 1"
+    ]},
+    {"topic": "Estimation and significant figures", "key_stage": "KS4", "objectives": [
+      "Round numbers to a given number of significant figures",
+      "Estimate calculations by rounding each value to 1 significant figure",
+      "Determine whether an answer is reasonable by estimation"
+    ]},
+    {"topic": "Expanding and simplifying expressions", "key_stage": "KS4", "objectives": [
+      "Expand a single bracket and simplify",
+      "Expand and simplify two single brackets",
+      "Simplify expressions with multiple variables and powers"
+    ]},
+    {"topic": "Expanding double brackets", "key_stage": "KS4", "objectives": [
+      "Expand products of two binomials using FOIL or grid",
+      "Expand and simplify (x + a)(x + b)",
+      "Expand (x + a)² as a perfect square",
+      "Expand products of two binomials with coefficients (ax + b)(cx + d)"
+    ]},
+    {"topic": "Factorising: single brackets", "key_stage": "KS4", "objectives": [
+      "Factorise by taking out a common numerical factor",
+      "Factorise expressions with common algebraic factors",
+      "Factorise expressions involving indices"
+    ]},
+    {"topic": "Factorising: quadratics (x² + bx + c)", "key_stage": "KS4", "objectives": [
+      "Factorise quadratics where the coefficient of x² is 1 (both positive)",
+      "Factorise quadratics where the coefficient of x² is 1 (mixed signs)",
+      "Factorise quadratics where the coefficient of x² > 1 (ax² + bx + c)"
+    ]},
+    {"topic": "Factorising: difference of two squares", "key_stage": "KS4", "objectives": [
+      "Recognise expressions in the form a² − b²",
+      "Factorise using the difference of two squares",
+      "Apply difference of two squares in multi-step problems"
+    ]},
+    {"topic": "Solving linear equations", "key_stage": "KS4", "objectives": [
+      "Solve equations with unknowns on one side",
+      "Solve equations with unknowns on both sides",
+      "Solve equations involving brackets",
+      "Solve equations involving fractions",
+      "Form and solve linear equations from context"
+    ]},
+    {"topic": "Solving quadratic equations (factorising)", "key_stage": "KS4", "objectives": [
+      "Solve x² + bx + c = 0 by factorising",
+      "Solve ax² + bx + c = 0 by factorising",
+      "Solve quadratic equations that need rearranging first",
+      "Interpret solutions in context"
+    ]},
+    {"topic": "Solving quadratic equations (formula)", "key_stage": "KS4", "objectives": [
+      "Identify a, b and c in a quadratic equation",
+      "Apply the quadratic formula x = (−b ± √(b²−4ac)) / 2a",
+      "Give solutions to a specified degree of accuracy",
+      "Use the discriminant to determine the number of solutions"
+    ]},
+    {"topic": "Completing the square", "key_stage": "KS4", "objectives": [
+      "Write x² + bx + c in the form (x + p)² + q",
+      "Find the turning point of a quadratic from completed-square form",
+      "Solve quadratic equations by completing the square",
+      "Sketch a quadratic graph using completed-square form"
+    ]},
+    {"topic": "Simultaneous equations (linear)", "key_stage": "KS4", "objectives": [
+      "Solve simultaneous equations by elimination",
+      "Solve simultaneous equations by substitution",
+      "Form simultaneous equations from word problems",
+      "Interpret solutions graphically as intersection points"
+    ]},
+    {"topic": "Simultaneous equations (one linear, one quadratic)", "key_stage": "KS4", "objectives": [
+      "Substitute a linear equation into a quadratic",
+      "Solve the resulting quadratic to find solutions",
+      "Interpret solutions graphically (line intersecting a curve)"
+    ]},
+    {"topic": "Inequalities: solving and representing", "key_stage": "KS4", "objectives": [
+      "Solve linear inequalities in one variable",
+      "Represent solutions on a number line",
+      "Solve double inequalities (e.g. −3 < 2x + 1 ≤ 7)",
+      "Represent inequalities on a graph (shading regions)"
+    ]},
+    {"topic": "Sequences: nth term of linear sequences", "key_stage": "KS4", "objectives": [
+      "Find the nth term of a linear sequence",
+      "Use the nth term to determine whether a value is in the sequence",
+      "Generate terms from an nth term expression"
+    ]},
+    {"topic": "Sequences: nth term of quadratic sequences", "key_stage": "KS4", "objectives": [
+      "Find the second differences of a quadratic sequence",
+      "Determine the nth term of a quadratic sequence (an² + bn + c)",
+      "Use the nth term to find specific terms or check membership"
+    ]},
+    {"topic": "Plotting and interpreting straight-line graphs (y = mx + c)", "key_stage": "KS4", "objectives": [
+      "Plot a straight-line graph from its equation",
+      "Identify gradient and y-intercept from y = mx + c",
+      "Find the equation of a line from its graph",
+      "Rearrange equations into the form y = mx + c"
+    ]},
+    {"topic": "Parallel and perpendicular lines", "key_stage": "KS4", "objectives": [
+      "Identify parallel lines (same gradient)",
+      "Identify perpendicular lines (product of gradients = −1)",
+      "Find the equation of a parallel line through a given point",
+      "Find the equation of a perpendicular line through a given point"
+    ]},
+    {"topic": "Plotting quadratic and cubic graphs", "key_stage": "KS4", "objectives": [
+      "Complete a table of values for y = ax² + bx + c",
+      "Plot and draw a smooth quadratic curve",
+      "Plot cubic graphs from tables of values",
+      "Use graphs to find approximate solutions to equations"
+    ]},
+    {"topic": "Real-life and distance-time graphs", "key_stage": "KS4", "objectives": [
+      "Interpret gradient as rate of change in context",
+      "Interpret distance-time graphs including acceleration",
+      "Interpret velocity-time graphs and calculate distance",
+      "Draw and interpret conversion graphs"
+    ]},
+    {"topic": "Equation of a circle (x² + y² = r²)", "key_stage": "KS4", "objectives": [
+      "Recognise the equation of a circle centred at the origin",
+      "Find the radius from x² + y² = r²",
+      "Determine whether a point lies on a given circle",
+      "Find the equation of a tangent to a circle at a given point"
+    ]},
+    {"topic": "Algebraic fractions", "key_stage": "KS4", "objectives": [
+      "Simplify algebraic fractions by cancelling common factors",
+      "Add and subtract algebraic fractions",
+      "Multiply and divide algebraic fractions",
+      "Solve equations involving algebraic fractions"
+    ]},
+    {"topic": "Functions and function notation", "key_stage": "KS4", "objectives": [
+      "Evaluate a function for a given input f(x)",
+      "Interpret function notation in context",
+      "Find the input given the output"
+    ]},
+    {"topic": "Inverse and composite functions", "key_stage": "KS4", "objectives": [
+      "Find the inverse of a linear function",
+      "Find the inverse of a simple non-linear function",
+      "Evaluate composite functions fg(x) and gf(x)",
+      "Solve equations involving composite functions"
+    ]},
+    {"topic": "Iteration", "key_stage": "KS4", "objectives": [
+      "Use the iteration formula xₙ₊₁ = f(xₙ) to find successive approximations",
+      "Rearrange an equation to produce an iteration formula",
+      "Give solutions to a required degree of accuracy"
+    ]},
+    {"topic": "Proof (algebraic)", "key_stage": "KS4", "objectives": [
+      "Show that an algebraic statement is an identity",
+      "Prove that an expression is always even/odd/multiple of n",
+      "Prove results about consecutive integers",
+      "Construct a counter-example to disprove a conjecture"
+    ]},
+    {"topic": "Ratio: simplifying, dividing in a ratio", "key_stage": "KS4", "objectives": [
+      "Simplify ratios including those with decimals or fractions",
+      "Divide a quantity in a given ratio (two and three parts)",
+      "Find a quantity given one part of a ratio",
+      "Combine ratios and solve multi-step ratio problems"
+    ]},
+    {"topic": "Direct and inverse proportion", "key_stage": "KS4", "objectives": [
+      "Set up and use equations for direct proportion (y = kx, y = kx²)",
+      "Set up and use equations for inverse proportion (y = k/x)",
+      "Recognise graphs of direct and inverse proportion",
+      "Solve proportion problems in context"
+    ]},
+    {"topic": "Percentage change (increase, decrease, reverse)", "key_stage": "KS4", "objectives": [
+      "Calculate percentage increase and decrease using multipliers",
+      "Find the percentage change between two values",
+      "Calculate the original amount after a percentage change (reverse %)",
+      "Solve problems involving repeated percentage change"
+    ]},
+    {"topic": "Compound interest and depreciation", "key_stage": "KS4", "objectives": [
+      "Calculate compound interest over multiple periods",
+      "Calculate depreciation over time",
+      "Use the formula for compound growth/decay",
+      "Compare simple and compound interest"
+    ]},
+    {"topic": "Growth and decay", "key_stage": "KS4", "objectives": [
+      "Model exponential growth situations",
+      "Model exponential decay situations",
+      "Interpret growth and decay graphs",
+      "Solve problems involving population growth, radioactive decay etc."
+    ]},
+    {"topic": "Speed, density and pressure", "key_stage": "KS4", "objectives": [
+      "Use the formula speed = distance ÷ time in complex problems",
+      "Use the formula density = mass ÷ volume",
+      "Use the formula pressure = force ÷ area",
+      "Convert between units in compound measure problems"
+    ]},
+    {"topic": "Unit conversions (metric and imperial)", "key_stage": "KS4", "objectives": [
+      "Convert between metric units of length, mass and capacity",
+      "Convert between metric and imperial units using given conversions",
+      "Convert between compound units (e.g. km/h to m/s)",
+      "Solve problems requiring conversions between unit systems"
+    ]},
+    {"topic": "Angle facts and proofs", "key_stage": "KS4", "objectives": [
+      "Apply angle facts to multi-step problems",
+      "Prove angle relationships using formal reasoning",
+      "Solve geometric proof problems with written justification"
+    ]},
+    {"topic": "Angles in parallel lines", "key_stage": "KS4", "objectives": [
+      "Identify and use alternate, corresponding and co-interior angles",
+      "Solve multi-step problems involving parallel lines",
+      "Provide geometric reasons for angle calculations"
+    ]},
+    {"topic": "Interior and exterior angles of polygons", "key_stage": "KS4", "objectives": [
+      "Calculate interior angles of regular and irregular polygons",
+      "Calculate exterior angles and use the sum = 360° property",
+      "Find the number of sides given angle information",
+      "Solve problems involving combinations of polygons"
+    ]},
+    {"topic": "Congruence and similarity", "key_stage": "KS4", "objectives": [
+      "Identify congruent triangles using SSS, SAS, ASA, RHS",
+      "Prove two triangles are congruent",
+      "Identify similar shapes and find scale factors",
+      "Use similarity to find missing lengths",
+      "Use area and volume scale factors for similar shapes"
+    ]},
+    {"topic": "Pythagoras' theorem", "key_stage": "KS4", "objectives": [
+      "Find the hypotenuse of a right-angled triangle",
+      "Find a shorter side of a right-angled triangle",
+      "Apply Pythagoras' theorem in 2-D problems (e.g. diagonals)",
+      "Apply Pythagoras' theorem in 3-D (diagonal of a cuboid)",
+      "Determine whether a triangle is right-angled using the converse"
+    ]},
+    {"topic": "Trigonometry: sin, cos, tan (right-angled triangles)", "key_stage": "KS4", "objectives": [
+      "Label opposite, adjacent and hypotenuse sides",
+      "Use SOH CAH TOA to find a missing side",
+      "Use SOH CAH TOA to find a missing angle",
+      "Choose the correct trig ratio for a given triangle",
+      "Apply trigonometry to solve problems in context (e.g. elevation, depression)"
+    ]},
+    {"topic": "Exact trigonometric values", "key_stage": "KS4", "objectives": [
+      "Recall exact values of sin, cos and tan for 0°, 30°, 45°, 60°, 90°",
+      "Use exact values in calculations without a calculator"
+    ]},
+    {"topic": "Sine rule and cosine rule", "key_stage": "KS4", "objectives": [
+      "Use the sine rule to find a missing side",
+      "Use the sine rule to find a missing angle",
+      "Use the cosine rule to find a missing side",
+      "Use the cosine rule to find a missing angle",
+      "Decide whether to use sine rule or cosine rule"
+    ]},
+    {"topic": "Area of a triangle using ½absinC", "key_stage": "KS4", "objectives": [
+      "Calculate the area of a triangle using ½absinC",
+      "Find a missing side or angle given the area",
+      "Apply ½absinC in multi-step problems"
+    ]},
+    {"topic": "Circle theorems", "key_stage": "KS4", "objectives": [
+      "Angle at centre = 2 × angle at circumference",
+      "Angle in a semicircle = 90°",
+      "Angles in the same segment are equal",
+      "Opposite angles of a cyclic quadrilateral sum to 180°",
+      "Tangent is perpendicular to radius at point of contact",
+      "Alternate segment theorem",
+      "Apply multiple circle theorems in a single problem"
+    ]},
+    {"topic": "Circumference and area of circles (complex)", "key_stage": "KS4", "objectives": [
+      "Solve problems involving circumference and area in context",
+      "Calculate area/perimeter of composite shapes involving circles",
+      "Work backwards from area or circumference to find dimensions"
+    ]},
+    {"topic": "Arc length and sector area", "key_stage": "KS4", "objectives": [
+      "Calculate the arc length of a sector",
+      "Calculate the area of a sector",
+      "Find the angle given arc length or sector area",
+      "Calculate perimeter and area of segments"
+    ]},
+    {"topic": "Volume of prisms, cylinders, cones and spheres", "key_stage": "KS4", "objectives": [
+      "Calculate the volume of a cylinder",
+      "Calculate the volume of a cone using ⅓πr²h",
+      "Calculate the volume of a sphere using ⁴⁄₃πr³",
+      "Calculate the volume of a frustum",
+      "Solve problems involving composite 3-D shapes"
+    ]},
+    {"topic": "Surface area of 3-D shapes", "key_stage": "KS4", "objectives": [
+      "Calculate the surface area of a cylinder",
+      "Calculate the surface area of a cone (curved + base)",
+      "Calculate the surface area of a sphere using 4πr²",
+      "Calculate the surface area of composite shapes"
+    ]},
+    {"topic": "Plans and elevations", "key_stage": "KS4", "objectives": [
+      "Draw the plan view of a 3-D shape",
+      "Draw the front and side elevations of a 3-D shape",
+      "Build a 3-D shape from its plan and elevations"
+    ]},
+    {"topic": "Transformations: reflection, rotation, translation, enlargement", "key_stage": "KS4", "objectives": [
+      "Perform and describe reflections in any line",
+      "Perform and describe rotations about any centre",
+      "Describe translations using column vectors",
+      "Perform and describe enlargements with positive scale factors",
+      "Combine two or more transformations"
+    ]},
+    {"topic": "Enlargement with fractional and negative scale factors", "key_stage": "KS4", "objectives": [
+      "Enlarge a shape by a fractional scale factor from a centre",
+      "Enlarge a shape by a negative scale factor from a centre",
+      "Describe the resulting position and size after enlargement"
+    ]},
+    {"topic": "Bearings", "key_stage": "KS4", "objectives": [
+      "Measure and draw bearings using a protractor",
+      "Calculate bearings using angle facts",
+      "Use bearings with trigonometry to solve problems",
+      "Find return bearings"
+    ]},
+    {"topic": "Constructions, bisectors and loci", "key_stage": "KS4", "objectives": [
+      "Construct accurate triangles using ruler and compasses",
+      "Construct perpendicular bisectors and angle bisectors",
+      "Solve loci problems (equidistant from a point, a line, two points)",
+      "Identify regions satisfying multiple loci conditions"
+    ]},
+    {"topic": "Vectors", "key_stage": "KS4", "objectives": [
+      "Represent vectors as column vectors and using bold notation",
+      "Add and subtract vectors",
+      "Multiply a vector by a scalar",
+      "Use vectors to prove geometric relationships (e.g. parallel, midpoint)",
+      "Solve problems involving position vectors and vector paths"
+    ]},
+    {"topic": "Probability: single events", "key_stage": "KS4", "objectives": [
+      "Calculate theoretical probability of a single event",
+      "Calculate P(not A) = 1 − P(A)",
+      "List all outcomes systematically",
+      "Calculate probability from a two-way table"
+    ]},
+    {"topic": "Probability: combined events (AND/OR rules)", "key_stage": "KS4", "objectives": [
+      "Use the addition rule P(A or B) = P(A) + P(B) for mutually exclusive events",
+      "Use the multiplication rule P(A and B) = P(A) × P(B) for independent events",
+      "Distinguish between mutually exclusive and independent events",
+      "Solve problems involving both AND and OR rules"
+    ]},
+    {"topic": "Tree diagrams", "key_stage": "KS4", "objectives": [
+      "Draw tree diagrams for two successive events",
+      "Draw tree diagrams for events without replacement",
+      "Calculate probabilities from tree diagrams (multiply along branches, add between)",
+      "Solve complex probability problems using tree diagrams"
+    ]},
+    {"topic": "Venn diagrams and set notation", "key_stage": "KS4", "objectives": [
+      "Use set notation (∪, ∩, ξ, ∅, ∈)",
+      "Populate a Venn diagram from given information",
+      "Calculate probabilities from Venn diagrams",
+      "Shade regions on Venn diagrams using set notation"
+    ]},
+    {"topic": "Conditional probability", "key_stage": "KS4", "objectives": [
+      "Understand the concept of conditional probability P(A|B)",
+      "Use tree diagrams for conditional probability problems",
+      "Use two-way tables for conditional probability",
+      "Solve problems involving conditional probability in context"
+    ]},
+    {"topic": "Relative frequency and expected outcomes", "key_stage": "KS4", "objectives": [
+      "Calculate relative frequency from experimental data",
+      "Use relative frequency to estimate probability",
+      "Calculate expected number of outcomes from probability",
+      "Compare experimental results with theoretical predictions"
+    ]},
+    {"topic": "Averages from frequency tables and grouped data", "key_stage": "KS4", "objectives": [
+      "Calculate the mean from a frequency table",
+      "Find the median class from a grouped frequency table",
+      "Estimate the mean from a grouped frequency table using midpoints",
+      "Find the modal class and range from grouped data"
+    ]},
+    {"topic": "Cumulative frequency and box plots", "key_stage": "KS4", "objectives": [
+      "Draw a cumulative frequency graph",
+      "Find the median and quartiles from a cumulative frequency graph",
+      "Draw a box plot from cumulative frequency data",
+      "Compare distributions using box plots"
+    ]},
+    {"topic": "Histograms (frequency density)", "key_stage": "KS4", "objectives": [
+      "Calculate frequency density",
+      "Draw a histogram from grouped data with unequal class widths",
+      "Interpret a histogram to find frequencies",
+      "Estimate the mean or median from a histogram"
+    ]},
+    {"topic": "Scatter graphs, correlation and lines of best fit", "key_stage": "KS4", "objectives": [
+      "Plot scatter graphs from data",
+      "Describe the type and strength of correlation",
+      "Draw and use a line of best fit",
+      "Identify outliers on a scatter graph",
+      "Understand the limitations of extrapolation"
+    ]},
+    {"topic": "Comparing distributions (quartiles, IQR)", "key_stage": "KS4", "objectives": [
+      "Find quartiles and interquartile range (IQR)",
+      "Compare two distributions using averages and spread",
+      "Interpret box plots and compare data sets",
+      "Identify outliers using the 1.5 × IQR rule"
+    ]},
+    {"topic": "Sampling methods", "key_stage": "KS4", "objectives": [
+      "Understand random, systematic and stratified sampling",
+      "Calculate stratified sample sizes",
+      "Explain advantages and disadvantages of different sampling methods",
+      "Identify sources of bias in sampling"
+    ]}
+  ]
+}

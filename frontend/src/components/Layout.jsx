@@ -11,6 +11,7 @@ import {
   BookOpen,
   Shield,
   BarChart3,
+  Target,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,7 +30,10 @@ export default function Layout() {
     { to: '/tests', icon: FileText, label: 'Tests' },
     { to: '/results', icon: BarChart3, label: 'Results' },
     ...(isAdmin || role === 'standalone'
-      ? [{ to: '/questions', icon: BookOpen, label: 'Question Bank' }]
+      ? [
+          { to: '/questions', icon: BookOpen, label: 'Question Bank' },
+          { to: '/curriculum', icon: Target, label: 'Curriculum' },
+        ]
       : []),
     ...(role === 'hod' || role === 'school_admin'
       ? [{ to: '/school', icon: Building2, label: 'School' }]

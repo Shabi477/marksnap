@@ -155,6 +155,16 @@ export const topicsAPI = {
   delete: (subjectId, topicId) => api.delete(`/subjects/${subjectId}/topics/${topicId}`),
 };
 
+// --- Objectives ---
+export const objectivesAPI = {
+  list: (subjectId, topicId) => api.get(`/subjects/${subjectId}/topics/${topicId}/objectives`),
+  create: (subjectId, topicId, data) => api.post(`/subjects/${subjectId}/topics/${topicId}/objectives`, data),
+  update: (subjectId, topicId, objectiveId, data) =>
+    api.put(`/subjects/${subjectId}/topics/${topicId}/objectives/${objectiveId}`, data),
+  delete: (subjectId, topicId, objectiveId) =>
+    api.delete(`/subjects/${subjectId}/topics/${topicId}/objectives/${objectiveId}`),
+};
+
 // --- Questions ---
 export const questionsAPI = {
   list: (params = {}) => api.get('/questions', { params }),

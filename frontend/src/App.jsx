@@ -16,6 +16,7 @@ import Results from './pages/Results';
 import ResultsOverview from './pages/ResultsOverview';
 import SchoolManagement from './pages/SchoolManagement';
 import QuestionBank from './pages/QuestionBank';
+import TopicManagement from './pages/TopicManagement';
 import AdminPanel from './pages/AdminPanel';
 import TestBuilder from './pages/TestBuilder';
 import Assessments from './pages/Assessments';
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="results/:testId" element={<Results />} />
         <Route path="school" element={<SchoolManagement />} />
         <Route path="questions" element={<QuestionBank />} />
+        <Route path="curriculum" element={<TopicManagement />} />
         <Route path="admin" element={<AdminPanel />} />
       </Route>
     </Routes>

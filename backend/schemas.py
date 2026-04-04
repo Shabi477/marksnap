@@ -224,6 +224,25 @@ class TopicResponse(BaseModel):
     strand: Optional[str] = None
     order_index: int = 0
     question_count: int = 0
+    objective_count: int = 0
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# --- Objectives ---
+class ObjectiveCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    order_index: int = 0
+
+class ObjectiveResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    topic_id: int
+    order_index: int = 0
+    question_count: int = 0
     created_at: datetime
     class Config:
         from_attributes = True
@@ -233,6 +252,7 @@ class TopicResponse(BaseModel):
 
 class QuestionCreate(BaseModel):
     topic_id: int
+    objective_id: Optional[int] = None
     subject_id: int
     question_text: str
     option_a: str
@@ -285,6 +305,7 @@ class QuestionUpdate(BaseModel):
     correct_answer: Optional[str] = None
     difficulty: Optional[str] = None
     topic_id: Optional[int] = None
+    objective_id: Optional[int] = None
     explanation: Optional[str] = None
     distractor_rationale: Optional[str] = None
     skill_type: Optional[str] = None
@@ -315,6 +336,8 @@ class QuestionResponse(BaseModel):
     skill_type: Optional[str] = None
     year_group: Optional[str] = None
     key_stage: Optional[str] = None
+    objective_id: Optional[int] = None
+    objective_name: Optional[str] = None
     topic_name: Optional[str] = None
     strand: Optional[str] = None
     subject_name: Optional[str] = None

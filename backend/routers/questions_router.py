@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from database import get_db
-from models import Question, Topic, Subject, Teacher, QuestionFlag
+from models import Question, Topic, Subject, Teacher, QuestionFlag, Objective
 from schemas import QuestionCreate, QuestionUpdate, QuestionResponse, AIGenerateRequest, DiagramGenerateRequest
 from auth import get_current_teacher, require_super_admin
 from typing import Optional
@@ -19,6 +19,7 @@ def _question_response(q: Question) -> dict:
     return {
         "id": q.id,
         "topic_id": q.topic_id,
+        "objective_id": q.objective_id,
         "subject_id": q.subject_id,
         "question_text": q.question_text,
         "option_a": q.option_a,
@@ -40,6 +41,7 @@ def _question_response(q: Question) -> dict:
         "year_group": q.year_group,
         "key_stage": q.key_stage,
         "topic_name": q.topic.name if q.topic else None,
+        "objective_name": q.objective.name if q.objective else None,
         "strand": q.topic.strand if q.topic else None,
         "subject_name": q.subject.name if q.subject else None,
         "is_active": q.is_active,
@@ -53,6 +55,7 @@ def _question_response(q: Question) -> dict:
 def list_questions(
     subject_id: Optional[int] = None,
     topic_id: Optional[int] = None,
+    objective_id: Optional[int] = None,
     difficulty: Optional[str] = None,
     key_stage: Optional[str] = None,
     year_group: Optional[str] = None,
@@ -89,6 +92,8 @@ def list_questions(
         query = query.filter(Question.subject_id == subject_id)
     if topic_id:
         query = query.filter(Question.topic_id == topic_id)
+    if objective_id:
+        query = query.filter(Question.objective_id == objective_id)
     if difficulty:
         query = query.filter(Question.difficulty == difficulty)
     if key_stage:
@@ -154,6 +159,7 @@ def create_question(
 
     q = Question(
         topic_id=data.topic_id,
+        objective_id=data.objective_id,
         subject_id=data.subject_id,
         question_text=data.question_text,
         option_a=data.option_a,

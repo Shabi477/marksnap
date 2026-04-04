@@ -126,7 +126,22 @@ class Topic(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     subject = relationship("Subject", back_populates="topics")
+    objectives = relationship("Objective", back_populates="topic", order_by="Objective.order_index")
     questions = relationship("Question", back_populates="topic")
+
+
+class Objective(Base):
+    __tablename__ = "objectives"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)  # Optional fuller description / NC reference
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False, index=True)
+    order_index = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    topic = relationship("Topic", back_populates="objectives")
+    questions = relationship("Question", back_populates="objective")
 
 
 class Question(Base):
@@ -134,6 +149,7 @@ class Question(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False, index=True)
+    objective_id = Column(Integer, ForeignKey("objectives.id"), nullable=True, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id"), nullable=False, index=True)  # denormalised
     question_text = Column(Text, nullable=False)
     option_a = Column(String, nullable=False)
@@ -159,6 +175,7 @@ class Question(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     topic = relationship("Topic", back_populates="questions")
+    objective = relationship("Objective", back_populates="questions")
     subject = relationship("Subject", back_populates="questions")
     school = relationship("School")
     creator = relationship("Teacher")
