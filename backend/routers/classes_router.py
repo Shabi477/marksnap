@@ -154,7 +154,8 @@ def add_student(
     else:
         student_number = _next_student_number(db, class_group)
     student = Student(
-        name=data.name, student_code=student_code, class_id=class_id, student_number=student_number
+        name=data.name, student_code=student_code, class_id=class_id,
+        student_number=student_number, school_id=class_group.school_id,
     )
     db.add(student)
     db.commit()
@@ -205,7 +206,8 @@ def upload_students_csv(
         existing = db.query(Student).filter(Student.student_code == student_code).first()
         if existing:
             continue
-        student = Student(name=name, student_code=student_code, class_id=class_id)
+        student = Student(name=name, student_code=student_code, class_id=class_id,
+                        school_id=class_group.school_id)
         # Auto-assign student_number school-wide
         student.student_number = _next_student_number(db, class_group)
         db.add(student)
@@ -250,7 +252,8 @@ def add_existing_student_to_class(
     db: Session = Depends(get_db),
     teacher: Teacher = Depends(get_current_teacher),
 ):
-    """Move an existing student from another class to this class."""
+    """Move an existing student from another class to this class.
+    Student keeps their student_number — it's school-wide and permanent."""
     class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
     if not class_group or not _can_access_class(teacher, class_group):
         raise HTTPException(status_code=404, detail="Class not found")
@@ -259,6 +262,8 @@ def add_existing_student_to_class(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
+    old_class_name = student.class_group.name if student.class_group else "unknown"
     student.class_id = class_id
+    student.school_id = class_group.school_id  # Update school_id if moving across schools
     db.commit()
-    return {"message": f"{student.name} moved to {class_group.name}"}
+    return {"message": f"{student.name} moved from {old_class_name} to {class_group.name} (student number {student.student_number} unchanged)"}

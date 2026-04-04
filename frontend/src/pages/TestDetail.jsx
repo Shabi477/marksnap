@@ -85,12 +85,10 @@ export default function TestDetail() {
   };
 
   const handleDownloadSheets = async () => {
-    if (!selectedClass) {
-      toast.error('Select a class first');
-      return;
-    }
     try {
-      const res = await testsAPI.downloadSheets(testId, selectedClass);
+      const res = selectedClass
+        ? await testsAPI.downloadSheets(testId, selectedClass)
+        : await testsAPI.downloadGenericSheets(testId);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -123,13 +121,13 @@ export default function TestDetail() {
   // Workflow steps
   const steps = [
     { label: 'Set Answer Key', icon: ClipboardList, done: answerKeyComplete, hint: 'Click the bubbles below to mark correct answers' },
-    { label: 'Select Class', icon: BookOpen, done: classSelected, hint: 'Choose which class to generate sheets for' },
+    { label: 'Select Class (optional)', icon: BookOpen, done: classSelected, hint: 'Choose a class, or skip to download generic sheets' },
     { label: 'Download & Print Sheets', icon: Printer, done: false, hint: 'Download PDF answer sheets for your students' },
     { label: 'Scan Completed Sheets', icon: Camera, done: false, hint: 'Use your phone camera to scan filled-in sheets' },
     { label: 'View Results', icon: BarChart3, done: false, hint: 'See scores and analytics' },
   ];
 
-  // Determine current active step
+  // Determine current active step — skip class selection once answer key is done
   const currentStep = !answerKeyComplete ? 0 : !classSelected ? 1 : 2;
 
   return (
@@ -198,7 +196,7 @@ export default function TestDetail() {
         <div className="flex gap-2 flex-wrap">
           <button onClick={handleDownloadSheets} className="btn-secondary flex items-center gap-2">
             <Download className="w-4 h-4" />
-            Download Sheets
+            {selectedClass ? 'Download Sheets' : 'Download Generic Sheets'}
           </button>
           <Link to={`/live-scan/${testId}`} className="btn-primary flex items-center gap-2">
             <Camera className="w-4 h-4" />

@@ -106,9 +106,11 @@ class Student(Base):
     student_code = Column(String, unique=True, index=True, nullable=False)
     student_number = Column(Integer, nullable=True, index=True)  # School-wide unique number for bubble sheets (001-999)
     class_id = Column(Integer, ForeignKey("class_groups.id"), nullable=False, index=True)
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True, index=True)  # Denormalized for fast school-wide lookup
     created_at = Column(DateTime, default=datetime.utcnow)
 
     class_group = relationship("ClassGroup", back_populates="students")
+    school = relationship("School")
     results = relationship("ScanResult", back_populates="student")
 
 

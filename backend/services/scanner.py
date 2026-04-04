@@ -58,7 +58,8 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
     else:
         logger.warning("No QR data from backend or frontend")
 
-    # QR now contains tid, cid, pg, tp (no sid)
+    # QR contains tid, sid (school_id), optionally cid, pg, tp
+    school_id = qr_data.get("sid") if qr_data else None
     class_id = qr_data.get("cid") if qr_data else None
     page_number = qr_data.get("pg", 1) if qr_data else 1
 
@@ -83,33 +84,57 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
     student_number = _read_student_number(thresh, h, w)
     logger.info(f"Student number read from bubbles: {student_number}")
 
-    # Look up student by student_number within the school (derived from class)
+    # Look up student by student_number, isolated to the school from QR
     student_id = None
     student_code = None
-    if student_number and class_id:
-        from models import Student, ClassGroup
-        class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
-        if class_group and class_group.school_id:
-            # School-wide lookup: find student in any class within the school
-            school_class_ids = [c.id for c in db.query(ClassGroup.id).filter(
-                ClassGroup.school_id == class_group.school_id
-            ).all()]
+    if student_number:
+        from models import Student, ClassGroup, Test as TestModel
+        student = None
+
+        if school_id:
+            # Direct school-wide lookup using school_id from QR (safest, no cross-school risk)
             student = db.query(Student).filter(
+                Student.school_id == school_id,
                 Student.student_number == student_number,
-                Student.class_id.in_(school_class_ids),
             ).first()
+            if not student:
+                # Fallback: check via class_groups for students without school_id backfilled yet
+                school_class_ids = [c.id for c in db.query(ClassGroup.id).filter(
+                    ClassGroup.school_id == school_id
+                ).all()]
+                if school_class_ids:
+                    student = db.query(Student).filter(
+                        Student.student_number == student_number,
+                        Student.class_id.in_(school_class_ids),
+                    ).first()
+        elif class_id:
+            # No school_id in QR but have class_id — derive school from class
+            class_group = db.query(ClassGroup).filter(ClassGroup.id == class_id).first()
+            if class_group and class_group.school_id:
+                student = db.query(Student).filter(
+                    Student.school_id == class_group.school_id,
+                    Student.student_number == student_number,
+                ).first()
+            elif class_group:
+                student = db.query(Student).filter(
+                    Student.class_id == class_id,
+                    Student.student_number == student_number,
+                ).first()
         else:
-            # Standalone: lookup within the specific class
-            student = db.query(Student).filter(
-                Student.class_id == class_id,
-                Student.student_number == student_number,
-            ).first()
+            # No school or class in QR — try to derive school from test owner
+            test_teacher = test.teacher if hasattr(test, 'teacher') and test.teacher else None
+            if test_teacher and test_teacher.school_id:
+                student = db.query(Student).filter(
+                    Student.school_id == test_teacher.school_id,
+                    Student.student_number == student_number,
+                ).first()
+
         if student:
             student_id = student.id
             student_code = student.student_code
-            logger.info(f"Student matched: {student.name} (id={student.id}, student_number={student_number})")
+            logger.info(f"Student matched: {student.name} (id={student.id}, student_number={student_number}, school_id={school_id})")
         else:
-            logger.warning(f"No student with student_number={student_number} in school/class {class_id}")
+            logger.warning(f"No student with student_number={student_number} in school {school_id or 'unknown'}")
 
     # Find all contours (potential bubbles) — only in the answer area (below top 30%)
     answer_region_top = int(h * 0.30)
@@ -172,14 +197,14 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
 
 def _read_student_number(thresh_image, img_h, img_w):
     """
-    Read the 3-digit student number from the bubble grid in the header area.
-    The grid has three rows (Hundreds, Tens, Units), each with 10 bubbles (digits 0-9).
-    Located in the top ~15%-29% of the page vertically, ~15%-65% horizontally.
+    Read the 4-digit student number from the bubble grid in the header area.
+    The grid has four rows (Thousands, Hundreds, Tens, Units), each with 10 bubbles (digits 0-9).
+    Located in the top ~15%-32% of the page vertically, ~15%-65% horizontally.
     Returns the student number as an integer, or None if unreadable.
     """
     # Crop the student number region from the thresholded image
-    y_top = int(img_h * 0.15)
-    y_bottom = int(img_h * 0.29)
+    y_top = int(img_h * 0.14)
+    y_bottom = int(img_h * 0.34)
     x_left = int(img_w * 0.12)
     x_right = int(img_w * 0.70)
 
@@ -219,8 +244,8 @@ def _read_student_number(thresh_image, img_h, img_w):
 
     logger.info(f"Student number region: found {len(bubbles)} bubble candidates")
 
-    if len(bubbles) < 20:
-        logger.warning(f"Not enough bubbles for student number grid (need >=20, found {len(bubbles)})")
+    if len(bubbles) < 30:
+        logger.warning(f"Not enough bubbles for student number grid (need >=30, found {len(bubbles)})")
         return None
 
     # Group into rows by Y position
@@ -242,12 +267,12 @@ def _read_student_number(thresh_image, img_h, img_w):
     digit_rows = [r for r in rows if 8 <= len(r) <= 12]
     logger.info(f"Student number digit rows found: {len(digit_rows)} (sizes: {[len(r) for r in rows]})")
 
-    if len(digit_rows) < 3:
-        logger.warning("Could not find 3 digit rows for student number")
+    if len(digit_rows) < 4:
+        logger.warning(f"Could not find 4 digit rows for student number (found {len(digit_rows)})")
         return None
 
-    # Take the first 3 qualifying rows (hundreds, tens, units)
-    digit_rows = digit_rows[:3]
+    # Take the first 4 qualifying rows (thousands, hundreds, tens, units)
+    digit_rows = digit_rows[:4]
 
     # Read each row — find which bubble has the highest fill ratio
     digits = []
@@ -274,7 +299,7 @@ def _read_student_number(thresh_image, img_h, img_w):
         digits.append(digit)
         logger.info(f"Student number digit: {digit} (fill ratio: {max_ratio:.2f})")
 
-    student_number = digits[0] * 100 + digits[1] * 10 + digits[2]
+    student_number = digits[0] * 1000 + digits[1] * 100 + digits[2] * 10 + digits[3]
     if student_number == 0:
         logger.warning("Student number is 0 — likely nothing was shaded")
         return None

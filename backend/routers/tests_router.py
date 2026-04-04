@@ -249,6 +249,28 @@ def download_answer_sheets(
     )
 
 
+@router.get("/{test_id}/sheets")
+def download_generic_sheets(
+    test_id: int,
+    db: Session = Depends(get_db),
+    teacher: Teacher = Depends(get_current_teacher),
+):
+    """Download answer sheets without a class — generic template for any student."""
+    test = db.query(Test).filter(Test.id == test_id).first()
+    if not test or not _can_access_test(teacher, test, db):
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    pdf_buffer = generate_answer_sheets(test)
+
+    return StreamingResponse(
+        io.BytesIO(pdf_buffer),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="marksnap_{test.name}_sheets.pdf"'
+        },
+    )
+
+
 @router.delete("/{test_id}")
 def delete_test(
     test_id: int,

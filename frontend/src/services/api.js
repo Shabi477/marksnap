@@ -94,6 +94,8 @@ export const testsAPI = {
   getQuestions: (testId) => api.get(`/tests/${testId}/questions`),
   downloadSheets: (testId, classId) =>
     api.get(`/tests/${testId}/sheets/${classId}`, { responseType: 'blob' }),
+  downloadGenericSheets: (testId) =>
+    api.get(`/tests/${testId}/sheets`, { responseType: 'blob' }),
 };
 
 // --- Scanning ---

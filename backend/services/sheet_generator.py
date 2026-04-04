@@ -69,8 +69,9 @@ def _draw_logo_icon(c, x, y, size):
     c.line(x + 20 * s, y + size - 16 * s, x + 24 * s, y + size - 16 * s)
 
 
-def generate_answer_sheets(test, class_group) -> bytes:
-    """Generate a single-copy answer sheet template. Teacher prints as many copies as needed."""
+def generate_answer_sheets(test, class_group=None) -> bytes:
+    """Generate a single-copy answer sheet template. Teacher prints as many copies as needed.
+    class_group is optional — if None, generates a generic sheet without class info."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
 
@@ -135,13 +136,18 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
     content_width = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
     qr_size = 30 * mm
 
-    # Generate QR code image — encodes test & class info only (no student)
+    # Generate QR code image — encodes test, school, and optionally class info (no student)
     qr_data = {
         "tid": test.id,
-        "cid": class_group.id,
         "pg": page_num,
         "tp": total_pages,
     }
+    # Always include school_id for safe student lookup isolation
+    if class_group and class_group.school_id:
+        qr_data["sid"] = class_group.school_id
+        qr_data["cid"] = class_group.id
+    elif hasattr(test, 'teacher') and test.teacher and test.teacher.school_id:
+        qr_data["sid"] = test.teacher.school_id
     qr_img = generate_qr_code(qr_data, box_size=5, border=2)
 
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
@@ -184,30 +190,35 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
     y = min(bar_top - bar_height, qr_y - 1.5 * mm) - 4 * mm
 
     # Info + student number box (full width, rounded)
-    info_box_height = 44 * mm
+    info_box_height = 52 * mm
     c.setFillColor(BRAND_COLOR_LIGHT)
     c.setStrokeColor(HexColor("#a5f3fc"))
     c.setLineWidth(0.8)
     c.roundRect(MARGIN_LEFT, y - info_box_height, content_width, info_box_height, 3 * mm, fill=1, stroke=1)
 
-    # Row 1: Test name + Class name
+    # Row 1: Test name + Class name (if provided)
     c.setFillColor(HexColor("#0c4a6e"))
     c.setFont("Helvetica-Bold", 11)
     row1_y = y - 7 * mm
     c.drawString(MARGIN_LEFT + 5 * mm, row1_y, f"Test: {test.name}")
-    c.drawString(MARGIN_LEFT + content_width / 2, row1_y, f"Class: {class_group.name}")
+    if class_group:
+        c.drawString(MARGIN_LEFT + content_width / 2, row1_y, f"Class: {class_group.name}")
+    else:
+        c.setFont("Helvetica", 10)
+        c.setFillColor(HexColor("#64748b"))
+        c.drawString(MARGIN_LEFT + content_width / 2, row1_y, "Class: ________________")
 
-    # Row 2-3-4: Student number bubble grid (3 digits)
+    # Row 2-3-4-5: Student number bubble grid (4 digits)
     grid_label_y = row1_y - 10 * mm
     c.setFont("Helvetica-Bold", 10)
     c.setFillColor(HexColor("#0c4a6e"))
-    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 1 * mm, "Student")
-    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 8 * mm, "No.")
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 4 * mm, "Student")
+    c.drawString(MARGIN_LEFT + 5 * mm, grid_label_y - 11 * mm, "No.")
 
     _draw_student_number_grid(c, MARGIN_LEFT + 28 * mm, grid_label_y + 5.5 * mm)
 
-    # Row 5: Name write-in line
-    name_y = grid_label_y - 22 * mm
+    # Row 6: Name write-in line
+    name_y = grid_label_y - 30 * mm
     c.setFont("Helvetica-Bold", 10)
     c.setFillColor(HexColor("#0c4a6e"))
     c.drawString(MARGIN_LEFT + 5 * mm, name_y, "Name:")
@@ -237,10 +248,10 @@ def _draw_header(c, test, class_group, page_num, total_pages, y):
 
 
 def _draw_student_number_grid(c, x_start, y_start):
-    """Draw the 3-row student number bubble grid (Hundreds, Tens, Units, each 0-9)."""
+    """Draw the 4-row student number bubble grid (Thousands, Hundreds, Tens, Units, each 0-9)."""
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-    for row_idx, label in enumerate(["100s", "10s", "1s"]):
+    for row_idx, label in enumerate(["1000s", "100s", "10s", "1s"]):
         row_y = y_start - row_idx * STUDENT_NUM_ROW_SPACING
 
         # Row label
