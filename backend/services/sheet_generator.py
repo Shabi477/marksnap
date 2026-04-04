@@ -16,10 +16,10 @@ MARGIN_RIGHT = 15 * mm
 MARGIN_BOTTOM = 14 * mm
 
 BUBBLE_RADIUS = 4 * mm
-BUBBLE_WIDTH = 5.5 * mm    # oval width (horizontal)
-BUBBLE_HEIGHT = 7 * mm     # oval height (vertical) — taller than wide like QuickKey
-BUBBLE_SPACING_X = 9.5 * mm
-BUBBLE_SPACING_Y = 9 * mm
+BUBBLE_WIDTH = 4 * mm      # oval width (horizontal)
+BUBBLE_HEIGHT = 5.5 * mm   # oval height (vertical) — taller than wide like QuickKey
+BUBBLE_SPACING_X = 7.5 * mm
+BUBBLE_SPACING_Y = 7.5 * mm
 QUESTION_NUM_WIDTH = 14 * mm
 
 BRAND_COLOR = HexColor("#0e7490")  # Dark blue-teal
@@ -29,10 +29,10 @@ BRAND_COLOR_DARK = HexColor("#164e63")
 ALIGNMENT_MARKER_SIZE = 5 * mm
 
 # Student number bubble grid constants
-STUDENT_NUM_BUBBLE_W = 5 * mm
-STUDENT_NUM_BUBBLE_H = 6.5 * mm
-STUDENT_NUM_SPACING_X = 8.5 * mm   # horizontal spacing between digit bubbles
-STUDENT_NUM_ROW_SPACING = 8.5 * mm # vertical spacing between digit rows
+STUDENT_NUM_BUBBLE_W = 3.5 * mm
+STUDENT_NUM_BUBBLE_H = 5 * mm
+STUDENT_NUM_SPACING_X = 7 * mm     # horizontal spacing between digit bubbles
+STUDENT_NUM_ROW_SPACING = 7 * mm   # vertical spacing between digit rows
 
 OPTIONS = ["A", "B", "C", "D", "E"]
 
