@@ -129,15 +129,18 @@ def _process_single_page(pil_image: Image.Image, test, answer_key_map: dict, pag
         logger.warning("No bubbles detected — returning empty results")
         return results
 
-    # Group bubbles into rows (questions) and columns (options)
-    bubble_groups = _group_bubbles(bubble_contours)
-    logger.info(f"Question rows detected: {len(bubble_groups)}")
-
     # Determine which sections are on this page
     page_sections = [s for s in test.sections if s.page_number == page_number]
     if not page_sections:
         logger.warning(f"No sections found for page {page_number}, using all sections as fallback")
         page_sections = test.sections
+
+    # Use the first section's start_question for correct numbering
+    page_start_q = page_sections[0].start_question if page_sections else 1
+
+    # Group bubbles into rows (questions) and columns (options)
+    bubble_groups = _group_bubbles(bubble_contours, start_question=page_start_q)
+    logger.info(f"Question rows detected: {len(bubble_groups)}, starting at Q{page_start_q}")
 
     # Analyze each question row
     for q_idx, (question_num, bubbles) in enumerate(sorted(bubble_groups.items())):
@@ -370,7 +373,7 @@ def _filter_bubble_contours(contours, image_shape):
     return bubbles
 
 
-def _group_bubbles(bubbles):
+def _group_bubbles(bubbles, start_question=1):
     """Group bubbles into question rows based on Y position."""
     if not bubbles:
         return {}
@@ -394,9 +397,10 @@ def _group_bubbles(bubbles):
     rows.append(sorted(current_row, key=lambda b: b["x"]))
 
     # Convert rows to question_number -> bubbles mapping
+    # start_question allows correct numbering for multi-section/multi-page tests
     groups = {}
     for i, row in enumerate(rows):
-        groups[i + 1] = row
+        groups[start_question + i] = row
 
     return groups
 

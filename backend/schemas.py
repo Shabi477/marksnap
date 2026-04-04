@@ -201,6 +201,12 @@ class ScanResultAssignStudent(BaseModel):
 class LiveScanResponse(BaseModel):
     student_name: Optional[str] = None
     student_code: Optional[str] = None
+    score: int = 0
+    total: int = 0
+    percentage: float = 0.0
+    flagged_count: int = 0
+    answers: dict[str, Optional[str]] = {}
+    correct: dict[str, bool] = {}
 
 
 # --- Topics ---

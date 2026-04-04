@@ -368,6 +368,25 @@ async def live_scan(
                 detail="No answers detected. Make sure the full answer sheet is visible and well-lit."
             )
 
+        # Check for duplicate — if this student already has results for this test, update instead of creating new
+        first_student_id = next((r.get("student_id") for r in results if r.get("student_id")), None)
+        if first_student_id:
+            existing = (
+                db.query(ScanResult)
+                .join(ScanBatch)
+                .filter(
+                    ScanBatch.test_id == test_id,
+                    ScanResult.student_id == first_student_id,
+                )
+                .all()
+            )
+            if existing:
+                # Delete old results for this student on this test
+                for old in existing:
+                    db.delete(old)
+                db.flush()
+                logger.info(f"Replaced {len(existing)} existing results for student {first_student_id} on test {test_id}")
+
         # Build response
         student_code = None
         student_name = None
@@ -392,8 +411,11 @@ async def live_scan(
                     student_name = student.name
 
             # Also persist as ScanResult (create a batch for record-keeping)
+        # Extract class_id from QR data
+        batch_class_id = frontend_qr.get("cid") if frontend_qr else None
         batch = ScanBatch(
             test_id=test_id,
+            class_id=batch_class_id,
             status="completed",
             total_pages=1,
             processed_pages=1,
