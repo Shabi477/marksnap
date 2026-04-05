@@ -187,6 +187,7 @@ export const questionsAPI = {
   deleteImage: (id) => api.delete(`/questions/${id}/image`),
   generateDiagram: (id, data) => api.post(`/questions/${id}/generate-diagram`, data),
   aiGenerate: (data) => api.post('/questions/ai-generate', data),
+  aiBatchGenerate: (data) => api.post('/questions/ai-batch-generate', data),
 };
 
 // --- Test Generation from Bank ---

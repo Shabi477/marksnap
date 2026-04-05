@@ -3,7 +3,7 @@ import { questionsAPI, topicsAPI, subjectsAPI, objectivesAPI, getUploadUrl } fro
 import toast from 'react-hot-toast';
 import { difficultyColor } from '../utils/helpers';
 import useStrandCategories from '../hooks/useStrandCategories';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Sparkles, X, Loader2 } from 'lucide-react';
 
 export default function QuestionBank() {
   const [subjects, setSubjects] = useState([]);
@@ -18,6 +18,18 @@ export default function QuestionBank() {
   const [expandedQ, setExpandedQ] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Batch generate modal state
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchSubject, setBatchSubject] = useState(null);
+  const [batchKeyStage, setBatchKeyStage] = useState('KS3');
+  const [batchTopics, setBatchTopics] = useState([]);
+  const [batchTopic, setBatchTopic] = useState(null);
+  const [batchObjectives, setBatchObjectives] = useState([]);
+  const [batchCounts, setBatchCounts] = useState({});
+  const [batchDifficulty, setBatchDifficulty] = useState('medium');
+  const [batchGenerating, setBatchGenerating] = useState(false);
+  const [batchProgress, setBatchProgress] = useState('');
 
 
   useEffect(() => {
@@ -106,6 +118,86 @@ export default function QuestionBank() {
     }
   };
 
+  // --- Batch generate helpers ---
+  const openBatchModal = () => {
+    setBatchSubject(selectedSubject || null);
+    setBatchKeyStage(filters.key_stage || 'KS3');
+    setBatchTopic(null);
+    setBatchTopics([]);
+    setBatchObjectives([]);
+    setBatchCounts({});
+    setBatchDifficulty('medium');
+    setBatchProgress('');
+    setShowBatchModal(true);
+  };
+
+  useEffect(() => {
+    if (showBatchModal && batchSubject) {
+      topicsAPI.list(batchSubject, { key_stage: batchKeyStage || undefined })
+        .then(r => { setBatchTopics(r.data); setBatchTopic(null); setBatchObjectives([]); setBatchCounts({}); })
+        .catch(() => setBatchTopics([]));
+    }
+  }, [showBatchModal, batchSubject, batchKeyStage]);
+
+  useEffect(() => {
+    if (showBatchModal && batchSubject && batchTopic) {
+      objectivesAPI.list(batchSubject, batchTopic)
+        .then(r => {
+          setBatchObjectives(r.data);
+          // Default all counts to 0
+          const counts = {};
+          r.data.forEach(o => { counts[o.id] = 0; });
+          setBatchCounts(counts);
+        })
+        .catch(() => setBatchObjectives([]));
+    } else {
+      setBatchObjectives([]);
+      setBatchCounts({});
+    }
+  }, [showBatchModal, batchSubject, batchTopic]);
+
+  const batchTotal = Object.values(batchCounts).reduce((s, c) => s + (parseInt(c) || 0), 0);
+
+  const setAllCounts = (n) => {
+    const counts = {};
+    batchObjectives.forEach(o => { counts[o.id] = n; });
+    setBatchCounts(counts);
+  };
+
+  const handleBatchGenerate = async () => {
+    const objectives = Object.entries(batchCounts)
+      .filter(([, count]) => parseInt(count) > 0)
+      .map(([id, count]) => ({ objective_id: parseInt(id), count: parseInt(count) }));
+
+    if (objectives.length === 0) {
+      toast.error('Set at least 1 question for an objective');
+      return;
+    }
+
+    setBatchGenerating(true);
+    setBatchProgress(`Generating ${batchTotal} questions across ${objectives.length} objectives...`);
+
+    try {
+      const res = await questionsAPI.aiBatchGenerate({
+        subject_id: batchSubject,
+        topic_id: batchTopic,
+        objectives,
+        difficulty: batchDifficulty,
+        key_stage: batchKeyStage,
+        num_options: 4,
+        source: 'system',
+      });
+      toast.success(`Generated ${res.data.length} questions!`);
+      setShowBatchModal(false);
+      fetchQuestions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Batch generation failed');
+    } finally {
+      setBatchGenerating(false);
+      setBatchProgress('');
+    }
+  };
+
   const answerLabel = (q, letter) => {
     const key = `option_${letter.toLowerCase()}`;
     return q[key];
@@ -116,6 +208,12 @@ export default function QuestionBank() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Question Bank</h1>
         <div className="flex items-center gap-3">
+          <button
+            onClick={openBatchModal}
+            className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-1"
+          >
+            <Sparkles className="w-4 h-4" /> AI Generate
+          </button>
           <button
             onClick={() => { fetchQuestions(); toast.success('Refreshed'); }}
             className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 flex items-center gap-1"
@@ -401,6 +499,131 @@ export default function QuestionBank() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* AI Batch Generate Modal */}
+      {showBatchModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-lg font-semibold">AI Batch Generate</h2>
+              </div>
+              <button onClick={() => setShowBatchModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Subject + Key Stage + Difficulty */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                  <select value={batchSubject || ''} onChange={e => setBatchSubject(e.target.value ? Number(e.target.value) : null)} className="w-full rounded-lg border-gray-300 text-sm py-2">
+                    <option value="">Select...</option>
+                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Key Stage</label>
+                  <select value={batchKeyStage} onChange={e => setBatchKeyStage(e.target.value)} className="w-full rounded-lg border-gray-300 text-sm py-2">
+                    <option value="KS1">KS1</option>
+                    <option value="KS2">KS2</option>
+                    <option value="KS3">KS3</option>
+                    <option value="KS4">KS4</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Difficulty</label>
+                  <select value={batchDifficulty} onChange={e => setBatchDifficulty(e.target.value)} className="w-full rounded-lg border-gray-300 text-sm py-2">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Topic */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Topic</label>
+                <select value={batchTopic || ''} onChange={e => setBatchTopic(e.target.value ? Number(e.target.value) : null)} className="w-full rounded-lg border-gray-300 text-sm py-2" disabled={!batchSubject}>
+                  <option value="">Select a topic...</option>
+                  {batchTopics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              {/* Objectives list with per-objective counts */}
+              {batchTopic && batchObjectives.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-medium text-gray-600">Questions per Objective</label>
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3, 5].map(n => (
+                        <button key={n} onClick={() => setAllCounts(n)} className="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded">
+                          {n === 0 ? 'Clear' : `All ${n}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {batchObjectives.map(o => (
+                      <div key={o.id} className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800 truncate">{o.name}</p>
+                          <p className="text-xs text-gray-400">{o.question_count} existing</p>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max="20"
+                          value={batchCounts[o.id] || 0}
+                          onChange={e => setBatchCounts(prev => ({ ...prev, [o.id]: parseInt(e.target.value) || 0 }))}
+                          className="w-16 rounded-lg border-gray-300 text-sm py-1 text-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {batchTopic && batchObjectives.length === 0 && (
+                <div className="text-center py-6 text-gray-400 text-sm">
+                  No objectives found for this topic. Add objectives in the Curriculum page first.
+                </div>
+              )}
+
+              {!batchTopic && batchSubject && (
+                <div className="text-center py-6 text-gray-400 text-sm">
+                  Select a topic to see its objectives.
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 border-t bg-gray-50 flex items-center justify-between">
+              <span className="text-sm text-gray-600">
+                {batchTotal > 0 ? `${batchTotal} question${batchTotal !== 1 ? 's' : ''} to generate` : 'Set counts above'}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => setShowBatchModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBatchGenerate}
+                  disabled={batchGenerating || batchTotal === 0}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {batchGenerating ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />{batchProgress || 'Generating...'}</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" />Generate {batchTotal} Questions</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

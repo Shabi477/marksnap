@@ -36,6 +36,7 @@ def build_user_prompt(
     num_options: int,
     skill_type: str | None,
     strand: str | None,
+    objective_name: str | None = None,
 ) -> str:
     parts = [
         f"Generate {count} multiple-choice questions for:",
@@ -45,6 +46,9 @@ def build_user_prompt(
         f"- Difficulty: {difficulty}",
         f"- Number of options per question: {num_options}",
     ]
+    if objective_name:
+        parts.append(f"- Specific Learning Objective: {objective_name}")
+        parts.append(f"  ALL questions MUST test this specific objective. Do NOT generate generic topic questions.")
     if year_group:
         parts.append(f"- Year Group: {year_group}")
     if skill_type:
@@ -84,6 +88,7 @@ def generate_questions(
     num_options: int = 4,
     skill_type: str | None = None,
     strand: str | None = None,
+    objective_name: str | None = None,
 ) -> list[dict]:
     """Call OpenAI to generate batch MCQs. Returns list of question dicts."""
 
@@ -97,6 +102,7 @@ def generate_questions(
         num_options=num_options,
         skill_type=skill_type,
         strand=strand,
+        objective_name=objective_name,
     )
 
     response = client.chat.completions.create(

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from database import get_db
 from models import Question, Topic, Subject, Teacher, QuestionFlag, Objective
-from schemas import QuestionCreate, QuestionUpdate, QuestionResponse, AIGenerateRequest, DiagramGenerateRequest
+from schemas import QuestionCreate, QuestionUpdate, QuestionResponse, AIGenerateRequest, AIBatchGenerateRequest, DiagramGenerateRequest
 from auth import get_current_teacher, require_super_admin
 from typing import Optional
 from sqlalchemy import func
@@ -491,6 +491,14 @@ def ai_generate_questions(
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
+    # Optionally resolve objective name
+    objective_name = None
+    if data.objective_id:
+        objective = db.query(Objective).filter(Objective.id == data.objective_id).first()
+        if not objective:
+            raise HTTPException(status_code=404, detail="Objective not found")
+        objective_name = objective.name
+
     # Call AI service
     from services.ai_questions import generate_questions
 
@@ -505,6 +513,7 @@ def ai_generate_questions(
             num_options=data.num_options,
             skill_type=data.skill_type,
             strand=topic.strand,
+            objective_name=objective_name,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AI generation failed: {str(e)}")
@@ -515,6 +524,7 @@ def ai_generate_questions(
         q = Question(
             topic_id=data.topic_id,
             subject_id=data.subject_id,
+            objective_id=data.objective_id,
             question_text=aq["question_text"],
             option_a=aq["option_a"],
             option_b=aq["option_b"],
@@ -542,6 +552,102 @@ def ai_generate_questions(
     for q in created:
         db.refresh(q)
     return [_question_response(q) for q in created]
+
+
+@router.post("/ai-batch-generate", response_model=list[QuestionResponse], status_code=201)
+def ai_batch_generate_questions(
+    data: AIBatchGenerateRequest,
+    db: Session = Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    """Batch-generate questions for multiple objectives in a single request."""
+    # Permission checks
+    if data.source == "system" and teacher.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can create system questions")
+    if data.source == "school" and teacher.role not in ("super_admin", "school_admin", "hod"):
+        raise HTTPException(status_code=403, detail="Only school managers can create school questions")
+
+    topic = db.query(Topic).filter(Topic.id == data.topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    subject = db.query(Subject).filter(Subject.id == data.subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Validate total count
+    total_count = sum(obj.get("count", 0) for obj in data.objectives)
+    if total_count < 1 or total_count > 100:
+        raise HTTPException(status_code=400, detail="Total question count must be between 1 and 100")
+
+    from services.ai_questions import generate_questions
+
+    all_created = []
+    errors = []
+
+    for obj_spec in data.objectives:
+        obj_id = obj_spec.get("objective_id")
+        count = obj_spec.get("count", 0)
+        if count < 1 or count > 20:
+            continue
+
+        objective = db.query(Objective).filter(Objective.id == obj_id).first()
+        if not objective:
+            errors.append(f"Objective {obj_id} not found")
+            continue
+
+        try:
+            ai_questions = generate_questions(
+                topic_name=topic.name,
+                subject_name=subject.name,
+                count=count,
+                difficulty=data.difficulty,
+                key_stage=data.key_stage,
+                year_group=data.year_group,
+                num_options=data.num_options,
+                skill_type=data.skill_type,
+                strand=topic.strand,
+                objective_name=objective.name,
+            )
+        except Exception as e:
+            errors.append(f"AI failed for '{objective.name}': {str(e)}")
+            continue
+
+        for aq in ai_questions:
+            q = Question(
+                topic_id=data.topic_id,
+                subject_id=data.subject_id,
+                objective_id=obj_id,
+                question_text=aq["question_text"],
+                option_a=aq["option_a"],
+                option_b=aq["option_b"],
+                option_c=aq.get("option_c"),
+                option_d=aq.get("option_d"),
+                option_e=aq.get("option_e"),
+                num_options=data.num_options,
+                correct_answer=aq["correct_answer"],
+                difficulty=data.difficulty,
+                source=data.source,
+                school_id=teacher.school_id if data.source == "school" else None,
+                created_by=teacher.id,
+                explanation=aq.get("explanation"),
+                distractor_rationale=aq.get("distractor_rationale"),
+                skill_type=aq.get("skill_type", data.skill_type),
+                year_group=data.year_group,
+                key_stage=topic.key_stage or data.key_stage,
+                is_active=True,
+                status="approved",
+            )
+            db.add(q)
+            all_created.append(q)
+
+    db.commit()
+    for q in all_created:
+        db.refresh(q)
+
+    if errors and not all_created:
+        raise HTTPException(status_code=502, detail="; ".join(errors))
+
+    return [_question_response(q) for q in all_created]
 
 
 @router.post("/{question_id}/generate-diagram")

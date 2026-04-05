@@ -379,7 +379,20 @@ class TestAutoGenerate(BaseModel):
 class AIGenerateRequest(BaseModel):
     topic_id: int
     subject_id: int
+    objective_id: Optional[int] = None
     count: int = 5  # 1-20
+    difficulty: str = "medium"
+    key_stage: str = "KS3"
+    year_group: Optional[str] = None
+    num_options: int = 4
+    skill_type: Optional[str] = None
+    source: str = "system"
+
+
+class AIBatchGenerateRequest(BaseModel):
+    subject_id: int
+    topic_id: int
+    objectives: list[dict]  # [{"objective_id": int, "count": int}]
     difficulty: str = "medium"
     key_stage: str = "KS3"
     year_group: Optional[str] = None
