@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { subjectsAPI, topicsAPI, objectivesAPI } from '../services/api';
+import { subjectsAPI, topicsAPI, objectivesAPI, questionsAPI } from '../services/api';
 import {
-  BookOpen, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Target, X, Save,
+  BookOpen, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Target, X, Save, Sparkles, Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -21,6 +21,12 @@ export default function TopicManagement() {
   const [editingObj, setEditingObj] = useState(null);
   const [newTopic, setNewTopic] = useState(null);
   const [newObj, setNewObj] = useState(null);
+
+  // Batch generate state
+  const [genTopic, setGenTopic] = useState(null); // topic id currently in generate mode
+  const [genCounts, setGenCounts] = useState({});  // { objective_id: count }
+  const [genDifficulty, setGenDifficulty] = useState('medium');
+  const [genGenerating, setGenGenerating] = useState(false);
 
   useEffect(() => {
     subjectsAPI.list().then((res) => {
@@ -167,6 +173,61 @@ export default function TopicManagement() {
       setTopics(tRes.data);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to delete objective');
+    }
+  };
+
+  // -- Batch generate --
+  const openGenMode = (topicId) => {
+    const objs = objectives[topicId] || [];
+    const counts = {};
+    objs.forEach(o => { counts[o.id] = 0; });
+    setGenCounts(counts);
+    setGenDifficulty('medium');
+    setGenTopic(topicId);
+  };
+
+  const genTotal = Object.values(genCounts).reduce((s, c) => s + (parseInt(c) || 0), 0);
+
+  const setAllGenCounts = (topicId, n) => {
+    const objs = objectives[topicId] || [];
+    const counts = {};
+    objs.forEach(o => { counts[o.id] = n; });
+    setGenCounts(counts);
+  };
+
+  const handleBatchGenerate = async (topicId) => {
+    const items = Object.entries(genCounts)
+      .filter(([, count]) => parseInt(count) > 0)
+      .map(([id, count]) => ({ objective_id: parseInt(id), count: parseInt(count) }));
+
+    if (items.length === 0) {
+      toast.error('Set at least 1 question for an objective');
+      return;
+    }
+
+    setGenGenerating(true);
+    try {
+      const res = await questionsAPI.aiBatchGenerate({
+        subject_id: selectedSubject,
+        topic_id: topicId,
+        objectives: items,
+        difficulty: genDifficulty,
+        key_stage: selectedKS,
+        num_options: 4,
+        source: 'system',
+      });
+      toast.success(`Generated ${res.data.length} questions!`);
+      setGenTopic(null);
+      // Refresh objectives to update question counts
+      const objRes = await objectivesAPI.list(selectedSubject, topicId);
+      setObjectives(prev => ({ ...prev, [topicId]: objRes.data }));
+      // Refresh topics to update question counts
+      const tRes = await topicsAPI.list(selectedSubject, { key_stage: selectedKS });
+      setTopics(tRes.data);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Batch generation failed');
+    } finally {
+      setGenGenerating(false);
     }
   };
 
@@ -364,12 +425,97 @@ export default function TopicManagement() {
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => setNewObj({ topicId: topic.id, name: '', description: '' })}
-                              className="mt-2 flex items-center gap-1 text-xs text-brand-500 hover:text-brand-700 font-medium"
-                            >
-                              <Plus className="w-3.5 h-3.5" /> Add objective
-                            </button>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                onClick={() => setNewObj({ topicId: topic.id, name: '', description: '' })}
+                                className="flex items-center gap-1 text-xs text-brand-500 hover:text-brand-700 font-medium"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Add objective
+                              </button>
+                              {topicObjs.length > 0 && genTopic !== topic.id && (
+                                <button
+                                  onClick={() => openGenMode(topic.id)}
+                                  className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium ml-2"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5" /> AI Generate
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* AI Batch Generate Panel */}
+                          {genTopic === topic.id && (
+                            <div className="mt-3 border border-indigo-200 rounded-lg bg-indigo-50/50 p-3 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                                  <span className="text-sm font-semibold text-indigo-900">AI Generate Questions</span>
+                                </div>
+                                <button onClick={() => setGenTopic(null)} className="text-gray-400 hover:text-gray-600">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+
+                              {/* Difficulty + quick set */}
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <select
+                                  value={genDifficulty}
+                                  onChange={e => setGenDifficulty(e.target.value)}
+                                  className="rounded-lg border-gray-300 text-xs py-1.5 px-2"
+                                >
+                                  <option value="easy">Easy</option>
+                                  <option value="medium">Medium</option>
+                                  <option value="hard">Hard</option>
+                                </select>
+                                <span className="text-xs text-gray-500">Set all:</span>
+                                {[0, 1, 2, 3, 5].map(n => (
+                                  <button
+                                    key={n}
+                                    onClick={() => setAllGenCounts(topic.id, n)}
+                                    className="px-2 py-0.5 text-xs bg-white border border-gray-200 hover:bg-gray-100 rounded"
+                                  >
+                                    {n === 0 ? 'Clear' : n}
+                                  </button>
+                                ))}
+                              </div>
+
+                              {/* Per-objective counts */}
+                              <div className="space-y-1.5">
+                                {topicObjs.map(obj => (
+                                  <div key={obj.id} className="flex items-center gap-2">
+                                    <Target className="w-3 h-3 text-emerald-500 shrink-0" />
+                                    <span className="flex-1 text-xs text-gray-700 truncate">{obj.name}</span>
+                                    <span className="text-xs text-gray-400 shrink-0">{obj.question_count || 0} existing</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      max="20"
+                                      value={genCounts[obj.id] || 0}
+                                      onChange={e => setGenCounts(prev => ({ ...prev, [obj.id]: parseInt(e.target.value) || 0 }))}
+                                      className="w-14 rounded border-gray-300 text-xs py-1 text-center"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Generate button */}
+                              <div className="flex items-center justify-between pt-1">
+                                <span className="text-xs text-gray-500">
+                                  {genTotal > 0 ? `${genTotal} question${genTotal !== 1 ? 's' : ''} to generate` : 'Set counts above'}
+                                </span>
+                                <button
+                                  onClick={() => handleBatchGenerate(topic.id)}
+                                  disabled={genGenerating || genTotal === 0}
+                                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                  {genGenerating ? (
+                                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...</>
+                                  ) : (
+                                    <><Sparkles className="w-3.5 h-3.5" /> Generate {genTotal > 0 ? genTotal : ''}</>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
